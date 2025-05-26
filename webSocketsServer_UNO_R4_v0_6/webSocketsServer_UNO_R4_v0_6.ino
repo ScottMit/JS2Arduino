@@ -27,7 +27,7 @@
 // }
 //
 
-// v 0.6 set intervals for messages - not done
+// v 0.6 create structure for regular read intervals
 // v 0.5 added Enumerators to Javascript so INPUT/OUTPUT etc. are passed as integers
 // v 0.4 display IP address on R4 Matrix.
 // v 0.3 JSON messages address pins
@@ -48,6 +48,8 @@
 #include "TextAnimation.h"
 // enter your sensitive data in secrets.h
 #include "secrets.h"
+#include "defs.h"
+
 
 WebSocketsServer webSocket = WebSocketsServer(81);
 
@@ -67,28 +69,16 @@ bool matrixDisplayReady = true;
 unsigned long defaultInterval = 500;
 
 struct Actions {
-    const char* type;
-    byte pin;
-    unsigned long lastUpdate;
-    unsigned long interval;
-    float value;
+  int16_t type;
+  byte pin;
+  unsigned long lastUpdate;
+  unsigned long interval;
+  float value;
 };
 
 // allocate memory and limit actions to 100
-Actions registeredActions[100];
-
-
-// void updateServoPositions() {
-//     for (byte n = 0; n < 1; n++) {
-//         if (myServo[n].curPosition < myServo[n].endPosition) {
-//             myServo[n].curPosition += myServo[n].step;
-//             if (myServo[n].curPosition > myServo[n].endPosition) {
-//                 myServo[n].curPosition = myServo[n].endPosition;
-//             }
-//             myServo[n].servo.write(myServo[n].curPosition);
-//         }
-//     }
-// }
+#define NUM_ACTIONS 100
+Actions registeredActions[NUM_ACTIONS];
 
 
 void setup() {
@@ -100,6 +90,11 @@ void setup() {
   int cnt = 1000;  // Will wait for up to ~1 second for Serial to connect.
   while (!Serial && cnt--) {
     delay(1);
+  }
+
+  // fill actions with NULL values
+  for (int i = 0; i < NUM_ACTIONS; i++) {
+    registeredActions[i].type = NULL;
   }
 
   Serial.println();
@@ -151,6 +146,31 @@ void loop() {
     matrixDisplayReady = false;
     displayIP();
   }
+
+  for (int i = 0; i < NUM_ACTIONS; i++) {
+    if (registeredActions[i].type != NULL) {
+      if (millis() - registeredActions[i].lastUpdate > registeredActions[i].interval) {
+        int thePin = registeredActions[i].pin;
+        switch (registeredActions[i].type) {
+          case INPUT:
+          case INPUT_PULLUP:
+          case INPUT_PULLDOWN:
+            {
+              float theValue = (float)digitalRead(thePin);
+              returnMessage("digitalRead", thePin, theValue);
+              break;
+            }
+          case A_INPUT:
+            {
+              float theValue = (float)analogRead(thePin);
+              returnMessage("analogRead", thePin, theValue);
+              break;
+            }
+        }
+        registeredActions[i].lastUpdate = millis();
+      }
+    }
+  }
   // if (IPtimer.justFinished()) {
   //   // display IP address
   //   displayIP();
@@ -185,41 +205,67 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
             // Serial.println(i);
 
             const char* theAction = doc["data"][i]["action"];
-            int thePin = doc["data"][i]["pin"];
+            byte thePin = doc["data"][i]["pin"];
 
             if (strcmp(theAction, "pinMode") == 0) {
               // setup pins
-              int theMode = doc["data"][i]["value"];
-              unsigned long theInterval = doc["data"][i]["interval"];
-              if(theInterval == NULL) theInterval = defaultInterval;
+              int16_t theMode = doc["data"][i]["value"];
               // setup pin
               pinMode(thePin, theMode);
-              // setup interval read
-              
+              // if theMode is an INPUT type then setup interval reads
+              switch (theMode) {
+                case INPUT:
+                case INPUT_PULLUP:
+                case INPUT_PULLDOWN:
+                  {
+                    int actionIndex = getEmptyIndex();
+                    registeredActions[actionIndex].type = theMode;
+                    registeredActions[actionIndex].pin = thePin;
+                    registeredActions[actionIndex].lastUpdate = millis();
+                    unsigned long theInterval = doc["data"][i]["interval"];
+                    if (theInterval == NULL) theInterval = defaultInterval;
+                    registeredActions[actionIndex].interval = theInterval;
+                    // get the current value
+                    float theValue = (float)digitalRead(thePin);
+                    registeredActions[actionIndex].value = theValue;
+                    break;
+                  }
+                case A_INPUT:
+                  {
+                    int actionIndex = getEmptyIndex();
+                    registeredActions[actionIndex].type = theMode;
+                    registeredActions[actionIndex].pin = thePin;
+                    registeredActions[actionIndex].lastUpdate = millis();
+                    unsigned long theInterval = doc["data"][i]["interval"];
+                    if (theInterval == NULL) theInterval = defaultInterval;
+                    registeredActions[actionIndex].interval = theInterval;
+                    // get the current value
+                    float theValue = (float)analogRead(thePin);
+                    registeredActions[actionIndex].value = theValue;
+                    break;
+                  }
+              }
               // if interval is 0 then read only on demand
               Serial.print("pin ");
               Serial.print(thePin);
               Serial.print(" set to ");
               Serial.println(theMode);
-
             } else if (strcmp(theAction, "digitalRead") == 0) {
               // read the pin and return a value
-              int returnValue = digitalRead(thePin);
+              float returnValue = (float)digitalRead(thePin);
               returnMessage("digitalRead", thePin, returnValue);
               Serial.print("pin ");
               Serial.print(thePin);
               Serial.print(" digitalRead value: ");
               Serial.println(returnValue);
-
             } else if (strcmp(theAction, "analogRead") == 0) {
               // read the pin and return a value
-              int returnValue = analogRead(thePin);
+              float returnValue = (float)analogRead(thePin);
               returnMessage("analogRead", thePin, returnValue);
               Serial.print("pin ");
               Serial.print(thePin);
               Serial.print(" analogRead value: ");
               Serial.println(returnValue);
-
             } else if (strcmp(theAction, "digitalWrite") == 0) {
               // set the pin to the value
               int theValue = doc["data"][i]["value"];
@@ -228,7 +274,6 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
               Serial.print(thePin);
               Serial.print(" digitalWrite value: ");
               Serial.println(theValue);
-
             } else if (strcmp(theAction, "analogWrite") == 0) {
               // set the pin to the value
               int theValue = doc["data"][i]["value"];
@@ -240,8 +285,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
             }
           }
         }
+        break;
       }
-      break;
     case WStype_BIN:
       {
         Serial.print(num);
@@ -262,7 +307,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
   }
 }
 
-void returnMessage(const char* theAction, int pinNum, int returnValue) {
+void returnMessage(const char* theAction, int pinNum, float returnValue) {
   // Allocate the JSON document
   JsonDocument doc;
   // Add values in the document
@@ -312,4 +357,12 @@ const char* ipAddressToString(const IPAddress& ip) {
   static char ipString[16];  // Buffer to hold the string representation (max 15 chars + null terminator)
   sprintf(ipString, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
   return ipString;
+}
+
+int getEmptyIndex() {
+  int i = 0;
+  for (i; i < NUM_ACTIONS; i++) {
+    if (registeredActions[i].type == NULL) break;
+  }
+  return i;
 }

@@ -28,12 +28,15 @@
 // }
 //
 
-let ArduinoIP = 'ws://10.1.1.134:81/';
+let ArduinoIP = 'ws://172.20.10.13:81/';
 
+let buttonPin = 7;
+let buttonState = false;
 let LEDpin = 10;
 let LEDstate = false;
-let dialValue = 0;
 let setIOButton;
+let potPin = A0;
+let dialValue = 0;
 let readPotButton;
 
 function setup() {
@@ -42,6 +45,8 @@ function setup() {
     InitWebSocket(ArduinoIP);
 
     pinMode(LEDpin, OUTPUT);
+    pinMode(buttonPin, INPUT_PULLUP);
+    // pinMode(potPin, A_INPUT);
 
     setIOButton = createButton("set IO pins");
     setIOButton.mousePressed(() => {
@@ -51,7 +56,7 @@ function setup() {
 
     readPotButton = createButton("read pot");
     readPotButton.mousePressed(() => {
-        messageOut("analogRead", A0);
+        messageOut("analogRead", potPin);
     });
 }
 
@@ -67,21 +72,13 @@ function draw() {
     let LEDvalue = map(mouseX, 0, width, 0, 255);
     analogWrite(LEDpin, LEDvalue);
 
-    fill(0, 0, 255);
+    buttonState = digitalRead(buttonPin);
+    if(buttonState) {
+        fill(255, 0, 0);
+    } else {
+        fill(0, 0, 255);
+    }
+    dialValue = analogRead(potPin);
     let rad = map(dialValue, 0, 4095, 0, width*2);
     circle(width/2,  height/2, rad);
-
-    // if(mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height){
-    //     if(mouseX > width/2) {
-    //         if (!LEDstate){
-    //             LEDstate = true;
-    //             digitalWrite(LEDpin, HIGH);
-    //         }
-    //     } else {
-    //         if (LEDstate){
-    //             LEDstate = false;
-    //             digitalWrite(LEDpin, LOW);
-    //         }
-    //     }
-    // }
 }
