@@ -34,10 +34,8 @@ let buttonPin = 7;
 let buttonState = false;
 let LEDpin = 10;
 let LEDstate = false;
-let setIOButton;
 let potPin = A0;
 let dialValue = 0;
-let readPotButton;
 
 function setup() {
     createCanvas(600, 600);
@@ -46,28 +44,12 @@ function setup() {
 
     pinMode(LEDpin, OUTPUT);
     pinMode(buttonPin, INPUT_PULLUP);
-    // pinMode(potPin, A_INPUT);
-
-    setIOButton = createButton("set IO pins");
-    setIOButton.mousePressed(() => {
-        messageOut("pinMode", 11, INPUT);
-        messageOut("pinMode", 12, OUTPUT);
-    });
-
-    readPotButton = createButton("read pot");
-    readPotButton.mousePressed(() => {
-        messageOut("analogRead", potPin);
-    });
+    pinMode(potPin, ANALOG_INPUT);
 }
 
 function draw() {
     // draw division on screen
-    background(255);
-    noStroke();
-    fill(255, 0, 0);
-    rect(0, 0, width/2, height);
-    fill(0, 255, 0);
-    rect(width/2, 0, width, height);
+    background(0, 100, 0);
 
     let LEDvalue = map(mouseX, 0, width, 0, 255);
     analogWrite(LEDpin, LEDvalue);
@@ -79,6 +61,8 @@ function draw() {
         fill(0, 0, 255);
     }
     dialValue = analogRead(potPin);
+    if(dialValue){
     let rad = map(dialValue, 0, 4095, 0, width*2);
     circle(width/2,  height/2, rad);
-}
+   }
+ }

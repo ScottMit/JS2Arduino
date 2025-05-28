@@ -4,36 +4,8 @@
 //
 // ==============================================================
 //
-// JSON key: value pairs
-// example data
-// {
-//  "header": {
-//     "version": number,
-//  }
-//  "data":
-//    [
-//      {
-//        "action": "pinMode"/"digitalRead"/"analogRead"/"digitalWrite"/"analogWrite",
-//        "pin": number,
-//        "value": 0/1/0-255/"INPUT"/"INPUT_PULLUP"/"OUTPUT"
-//        "interval": number
-//       },
-//      {
-//        "action": "pinMode",
-//        "pin": number,
-//        "value": "INPUT"
-//       },
-//     ]
-// }
-//
-
-// v 0.7 added type and mode to struct - working
-// v 0.6 create structure for regular read intervals
-// v 0.5 added Enumerators to Javascript so INPUT/OUTPUT etc. are passed as integers
-// v 0.4 display IP address on R4 Matrix.
-// v 0.3 JSON messages address pins
-// v 0.2 Added JSON messages
-// v 0.1 Basic functionality
+// version B1 - working code v0.7
+//  - basic pin functionality
 
 #include <Arduino.h>
 #include <stdarg.h>
@@ -41,7 +13,6 @@
 #include "WiFiS3.h"
 #include <WebSocketsServer.h>
 #include <ArduinoJson.h>;
-// #include <millisDelay.h>
 // libraries for Arduino UNO R4
 // include ArduinoGraphics BEFORE Arduino_LED_Matrix
 #include "ArduinoGraphics.h"
@@ -64,9 +35,7 @@ ArduinoLEDMatrix matrix;
 // Compute as maximum length of text you want to print (eg. 20 chars)
 // multiplied by font width (eg. 5 for Font_5x7), so 20 chars * 5 px = 100.
 TEXT_ANIMATION_DEFINE(anim, 100)
-bool matrixDisplayReady = true;
-
-// millisDelay IPtimer;
+bool matrixDisplayReady = true; // why is this true?
 
 struct Actions {
   int16_t id;
@@ -151,8 +120,6 @@ void loop() {
   for (int i = 0; i < NUM_ACTIONS; i++) {
     if (registeredActions[i].id != NULL) {
       // Serial.println(i);
-      // if interval is 0 then read only on demand
-      // if (registeredActions[i].interval != 0) {
       if (millis() - registeredActions[i].lastUpdate > registeredActions[i].interval) {
         // Serial.print("registered id: ");
         // Serial.println(registeredActions[i].id);
@@ -187,16 +154,8 @@ void loop() {
         }
         registeredActions[i].lastUpdate = millis();
       }
-      // }
     }
   }
-
-  // Serial.println("looping");
-  // if (IPtimer.justFinished()) {
-  //   // display IP address
-  //   displayIP();
-  // }
-  // delay(100);
 }
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length) {
@@ -228,6 +187,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
             int id = doc["data"][i]["id"];
             int theAction = doc["data"][i]["action"];
             int theMode = doc["data"][i]["mode"];
+            // if interval is 0 then read only on demand
 
             // id numbers 0 - 99 are pins
             if (id < 100) {
@@ -424,11 +384,3 @@ int getIndex(int theId) {
   }
   return theIndex;
 }
-
-// int getEmptyIndex() {
-//   int i = 0;
-//   for (i; i < NUM_ACTIONS; i++) {
-//     if (registeredActions[i].type == NULL) break;
-//   }
-//   return i;
-// }
