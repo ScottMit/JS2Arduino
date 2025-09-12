@@ -1,4 +1,4 @@
-# Arduino WebSocket Communication
+# JS2Arduino
 
 Connect your Arduino to web interfaces and create interactive projects that bridge the digital and physical worlds. Perfect for design students, makers, and anyone wanting to prototype connected devices and interfaces.
 
