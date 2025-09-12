@@ -4,7 +4,7 @@ Connect your Arduino to web interfaces and create interactive projects that brid
 
 ## What is this?
 
-This project lets you control Arduino hardware (like LEDs, sensors, and motors) directly from a web page in real-time. No complex networking code needed - just connect your Arduino to WiFi and start building interactive experiences.
+This project lets you control Arduino hardware (like LEDs, sensors, and motors) directly from a web page in real-time. No complex networking code needed - just connect your Arduino to your WiFi network and start building interactive experiences.
 
 **Perfect for:**
 - Interactive art installations
@@ -19,14 +19,14 @@ This project lets you control Arduino hardware (like LEDs, sensors, and motors) 
 - **Web dashboards** that display real sensor data
 - **Interactive installations** controlled by web interfaces
 - **Smart lighting** systems with web-based controls
-- **Data visualizations** with physical LED feedback
+- **Data visualizations** from live sensor streams
 - **IoT prototypes** that respond to web inputs
 
 ## What You Need
 
 ### Hardware
 - **Arduino UNO R4 WiFi** OR **ESP32 development board**
-- **WiFi network** (your home/school network)
+- **WiFi network** (your home/school network, your Arduino and Web browser must be one the same network)
 - **Optional components:**
   - LED strips (NeoPixels/WS2812B)
   - Sensors (temperature, light, motion)
@@ -50,7 +50,7 @@ This project lets you control Arduino hardware (like LEDs, sensors, and motors) 
    - Adafruit_NeoPixel (if using LED strips)
 
 4. **Open the Arduino sketch:**
-   - Open `Arduino_to_p5js.ino` in Arduino IDE
+   - Open `Arduino2JS.ino` in Arduino IDE
 
 5. **Add your WiFi details:**
    - Edit the `secrets.h` file:
@@ -61,7 +61,7 @@ This project lets you control Arduino hardware (like LEDs, sensors, and motors) 
 
 6. **Upload to your Arduino:**
    - Connect Arduino via USB
-   - Select your board type (UNO R4 WiFi or ESP32 Dev Module)
+   - Select your board type (UNO R4 WiFi or ESP32)
    - Click Upload
 
 7. **Find your Arduino's IP address:**
@@ -71,7 +71,7 @@ This project lets you control Arduino hardware (like LEDs, sensors, and motors) 
 ### Step 2: Set Up Your Web Interface
 
 1. **Open the web folder:**
-   - Navigate to `P5js_to_Arduino` folder
+   - Navigate to `JS2Arduino` folder
 
 2. **Edit the connection:**
    - Open `sketch.js` in a text editor
@@ -120,16 +120,15 @@ That's it! Click the buttons to control your LED.
 ### Reading a Sensor
 ```javascript
 // Read a light sensor on pin A0
-arduino.pinMode(A0, ANALOG_INPUT);
 let lightLevel = arduino.analogRead(A0);
 
-// Use the value (0-1023 on UNO R4, 0-4095 on ESP32)
+// Analog value range 0-1023 on UNO R4, 0-4095 on ESP32
 console.log("Light level:", lightLevel);
 ```
 
 ### Controlling Brightness
 ```javascript
-// Control LED brightness with a slider
+// Control LED brightness
 arduino.pinMode(9, OUTPUT);
 arduino.analogWrite(9, sliderValue); // 0-255
 ```
@@ -154,7 +153,7 @@ arduino.neo.show();
 
 ### Arduino UNO R4 WiFi
 ```
-Digital pins: 0-13 (pin 13 has built-in LED)
+Digital pins: 0-13 (pin 13 has built-in LED, also addressable as D0, D1, D2, etc.)
 Analog pins:  A0-A5 (also numbered 14-19)
 PWM pins:     3, 5, 6, 9, 10, 11 (for analogWrite)
 ```
@@ -171,6 +170,7 @@ Input only: 34-39 (can't be outputs)
 ### "Can't connect to Arduino"
 - Check the IP address matches what Arduino displays
 - Make sure Arduino and computer are on same WiFi network
+- Make sure the html and sketch.js files are run on your local computer (not in a web IDE)
 - Try refreshing the web page
 
 ### "Arduino keeps disconnecting" (UNO R4)
@@ -178,16 +178,17 @@ Input only: 34-39 (can't be outputs)
 - Your commands still work, just some console messages appear
 
 ### "ESP32 won't start"
-- If using ESP32 Wrover board, change to "ESP32 Dev Module" in Arduino IDE
+- Check you have the correct board selected in the Arduino IDE. If using ESP32 Wrover board, you may need to choose "ESP32 Dev Module" in Arduino IDE
 
 ### "NeoPixels don't light up"
 - Check power - LED strips need lots of current
 - Try different pins (2, 4, 5 work well on ESP32)
 - Verify LED strip type (NEO_GRB vs NEO_RGB)
+- NeoPixels Vcc should be connected to 5V, data pin can generally be driven from 5V or 3.3V logic
 
 ### "Sensor readings are jumpy"
 - This is normal - use averaging in your code
-- Increase reading intervals if too fast
+- Increase reading intervals if too slow
 
 ## Understanding the Code
 
@@ -222,12 +223,12 @@ Input only: 34-39 (can't be outputs)
 ## Project Structure
 ```
 Arduino_to_p5js/           # Arduino code
-├── Arduino_to_p5js.ino    # Main Arduino sketch
+├── Arduino2JS.ino    # Main Arduino sketch
 ├── defs.h                 # Pin and command definitions
 ├── NeoPixelExtension.h    # NeoPixel LED support
 └── secrets.h              # Your WiFi credentials
 
-P5js_to_Arduino/           # Web interface code  
+JS2Arduino/           # Web interface code  
 ├── index.html             # Main web page
 ├── sketch.js              # Your project code (edit this!)
 ├── arduinoComs.js         # Arduino communication
