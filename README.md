@@ -74,10 +74,10 @@ arduino.pinMode(13, OUTPUT);
 arduino.digitalWrite(13, HIGH);
 
 // Read sensors
-arduino.pinMode(A0, ANALOG_INPUT);
 let sensorValue = arduino.analogRead(A0);
 
 // PWM output
+arduino.pinMode(9, OUTPUT);
 arduino.analogWrite(9, 128); // 50% brightness
 
 // NeoPixel control
@@ -152,6 +152,7 @@ Set global brightness (0-255)
 
 #### `show()`
 Update LED display
+- must be called for all other settings to take effect
 
 #### `Color(r, g, b, [w])`
 Create 32-bit color value
