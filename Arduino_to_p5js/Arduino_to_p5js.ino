@@ -1,6 +1,9 @@
 // ==============================================================
-// Unified ESP32/UNO R4 WiFi WebSocket Server
-// Core + Extension Actions Modular Structure
+// Arduino to JavaScript WebSocket communication
+// Works with UNO R4 WiFi and ESP32
+// Version v0.12
+// by Scott Mitchell
+// GPL-3.0 License
 // ==============================================================
 
 #include <Arduino.h>
