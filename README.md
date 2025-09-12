@@ -103,25 +103,29 @@ The Arduino code automatically handles:
 #### `pinMode(pin, mode, [interval])`
 Configure pin mode
 - `pin`: Pin number
-- `mode`: INPUT, OUTPUT, ANALOG_INPUT, etc.
-- `interval`: Reading interval in ms (for input pins)
+- `mode`: INPUT, OUTPUT, INPUT_PULLUP, etc.
+- `interval`: Reading interval in ms (optional, defaults: 200ms)
 
-#### `digitalWrite(pin, value, [interval], [threshold])`
+#### `digitalWrite(pin, value, [interval])`
 Write digital value
 - `value`: HIGH (1) or LOW (0)
-- `interval`: Throttle interval in ms
-- `threshold`: Change threshold (0 for exact matching)
+- `interval`: Throttle interval in ms (optional, defaults: 100ms)
 
 #### `analogWrite(pin, value, [interval], [threshold])`
 Write PWM value
 - `value`: 0-255 (automatically rounded to integer)
-- `threshold`: Minimum change to trigger update (default: 2)
+- `interval`: Throttle interval in ms (optional, defaults: 100ms)
+- `threshold`: Minimum change to trigger update (optional, default: 2)
 
 #### `digitalRead(pin, [interval])`
-Read digital pin (returns cached value)
+Read digital pin
+- returns cached value
+- `interval`: Reading interval in ms (optional, defaults: 200ms)
 
 #### `analogRead(pin, [interval])`
-Read analog pin (returns cached value)
+Read analog pin
+- returns cached value
+- `interval`: Reading interval in ms (optional, defaults: 200ms)
 
 ### NeoPixel Extension
 
@@ -136,9 +140,12 @@ Set individual pixel color
 
 #### `fill(color, [first], [count])`
 Fill range of pixels
+- `color`: 32-bit color value.
+- `first`: start pixel in the NeoPixel array
+- `count`: number of pixels to fill
 
 #### `clear()`
-Turn off all pixels
+Turn off all pixel data
 
 #### `setBrightness(value)`
 Set global brightness (0-255)
@@ -158,7 +165,7 @@ arduino.messageOutInterval = 100;     // Output throttle (ms)
 arduino.defaultReadingInterval = 200; // Input polling (ms)
 
 // Per-method settings
-arduino.analogWrite(9, value, 50, 5); // 50ms interval, 5-unit threshold
+arduino.analogWrite(9, value, 50, 5); // pin 9, 50ms interval, 5-unit threshold
 ```
 
 ### Connection Settings
