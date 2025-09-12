@@ -238,7 +238,7 @@ END = 6
 
 ## License
 
-MIT License - feel free to use in your projects.
+GNU GENERAL PUBLIC LICENSE Version 3 - feel free to use in your projects.
 
 ## Author
 
