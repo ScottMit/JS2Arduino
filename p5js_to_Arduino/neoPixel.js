@@ -1,6 +1,10 @@
 // ==============================================================
 // NeoPixel Extension for Arduino WebSocket
 // Matches Adafruit NeoPixel Library API with Event System
+// Works with UNO R4 WiFi and ESP32
+// Version v0.12
+// by Scott Mitchell
+// GPL-3.0 License
 // ==============================================================
 
 // -------------------------------------------------------------------

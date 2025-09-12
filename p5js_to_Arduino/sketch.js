@@ -1,8 +1,10 @@
 // ==============================================================
-// P5js to Arduino webSocket communication
-// using UNO R4 WiFi WebSocket Server
+// arduinoComs.js
+// P5js to Arduino WebSocket communication
+// Works with UNO R4 WiFi and ESP32
+// Example Sketch using P5js
 // by Scott Mitchell
-//
+// GPL-3.0 License
 // ==============================================================
 
 
