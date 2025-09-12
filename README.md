@@ -14,13 +14,9 @@ A real-time WebSocket communication system for controlling Arduino devices (UNO 
 
 ## Hardware Requirements
 
-### Arduino UNO R4 WiFi
-- Arduino UNO R4 WiFi board
-- WiFi network connection
-
-### ESP32
-- ESP32 development board (ESP32 Dev Module recommended)
-- WiFi network connection
+### Microcontroller with WiFi connection
+- Arduino UNO R4 WiFi board, or
+- ESP32
 
 ### Works with
 - NeoPixel LED strips/rings (WS2812B compatible)
@@ -28,17 +24,14 @@ A real-time WebSocket communication system for controlling Arduino devices (UNO 
 - LEDs, etc.
 
 ## Software Requirements
-
 - Arduino IDE with WebSocketsServer library
 - Web browser with WebSocket support
-- works with p5js
+- compatible with p5js
 
 ## Installation
-
 1. Download the repository
 
 ### Arduino Setup
-
 1. Install required libraries in Arduino IDE:
    ```
    - WiFiS3 (for UNO R4) or WiFi (for ESP32)
