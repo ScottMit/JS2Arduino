@@ -1,6 +1,6 @@
 # Arduino WebSocket Communication
 
-A real-time WebSocket communication system for controlling Arduino devices (UNO R4 WiFi and ESP32) from web applications. Features a modular extension system for hardware components like NeoPixel LED strips.
+A real-time WebSocket communication system for controlling Arduino devices (UNO R4 WiFi and ESP32) on a local network from web applications. Features a modular extension system for hardware components like NeoPixel LED strips.
 
 ## Features
 
