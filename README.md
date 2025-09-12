@@ -1,16 +1,16 @@
 # Arduino WebSocket Communication
 
-A real-time WebSocket communication system for controlling Arduino devices (UNO R4 WiFi and ESP32) from p5.js web applications. Features a modular extension system for hardware components like NeoPixel LED strips.
+A real-time WebSocket communication system for controlling Arduino devices (UNO R4 WiFi and ESP32) from web applications. Features a modular extension system for hardware components like NeoPixel LED strips.
 
 ## Features
 
 - **Cross-platform Arduino support**: Works with both UNO R4 WiFi and ESP32
 - **Real-time WebSocket communication**: Low-latency bidirectional data exchange
 - **Arduino-like API**: Familiar `pinMode()`, `digitalWrite()`, `analogRead()` methods in JavaScript
-- **Intelligent throttling**: Reduces network traffic with configurable update intervals and change thresholds
+- **Intelligent throttling**: Reduces network traffic with configurable update intervals and value change thresholds
 - **Automatic reconnection**: Robust connection handling with exponential backoff
 - **Modular extension system**: Easy to add support for new hardware components
-- **Built-in NeoPixel support**: Complete Adafruit NeoPixel API compatibility
+- **NeoPixel support**: Example Neopixel module compatible with Adafruit NeoPixel API
 
 ## Hardware Requirements
 
@@ -22,18 +22,20 @@ A real-time WebSocket communication system for controlling Arduino devices (UNO 
 - ESP32 development board (ESP32 Dev Module recommended)
 - WiFi network connection
 
-### Optional Components
+### Works with
 - NeoPixel LED strips/rings (WS2812B compatible)
 - Analog sensors (potentiometers, photoresistors, etc.)
-- LEDs and resistors for testing
+- LEDs, etc.
 
 ## Software Requirements
 
 - Arduino IDE with WebSocketsServer library
 - Web browser with WebSocket support
-- p5.js (included via CDN)
+- works with p5js
 
 ## Installation
+
+1. Download the repository
 
 ### Arduino Setup
 
@@ -42,21 +44,24 @@ A real-time WebSocket communication system for controlling Arduino devices (UNO 
    - WiFiS3 (for UNO R4) or WiFi (for ESP32)
    - WebSocketsServer
    - ArduinoJson
-   - Adafruit_NeoPixel (for NeoPixel support)
+   - Adafruit_NeoPixel (for NeoPixel support, if required)
    ```
-
-2. Create `secrets.h` file with your WiFi credentials:
+2. Open the Arduino_to_p5js sketch in the Arduino IDE
+3. Edit the `secrets.h` file with your WiFi credentials:
    ```cpp
    #define SECRET_SSID "your_wifi_name"
    #define SECRET_PASS "your_wifi_password"
    ```
-
-3. Upload the main Arduino sketch to your board
+4. Select your Arduino board and port
+5. Upload sketch to your Arduino
+6. Read the Arduino IP address
+- If using an Arduino UNO R4 the IP address will be displayed on the onboard LED matrix
+- If using an ESP32 the IP address will be displayed on the Arduino IDE Serial Monitor
 
 ### JavaScript Setup
 
-1. Clone this repository
-2. Update the IP address in `sketch.js`:
+1. Open the P5js_to_Arduino folder in a code editor
+2. Edit the IP address in `sketch.js` to match the Arduinos IP:
    ```javascript
    let ArduinoIP = 'ws://YOUR_ARDUINO_IP:81/';
    ```
