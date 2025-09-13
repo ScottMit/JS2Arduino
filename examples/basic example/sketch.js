@@ -6,7 +6,7 @@
 // ==============================================================
 
 // UPDATE THIS IP ADDRESS TO MATCH YOUR ARDUINO
-let ArduinoIP = 'ws://10.1.1.161:81/';
+let ArduinoIP = 'ws://10.1.1.134:81/';
 
 let arduino;
 
