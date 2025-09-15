@@ -77,7 +77,7 @@ This project lets you control Arduino hardware (like LEDs, sensors, and motors) 
    - Open `sketch.js` in a text editor
    - Change this line to match your Arduino's IP:
    ```javascript
-   let ArduinoIP = 'ws://192.168.1.XXX:81/';
+   let ArduinoIP = '192.168.1.134';
    ```
 
 3. **Test it:**
@@ -95,7 +95,7 @@ Let's make a web page that turns an LED on and off:
 ```javascript
 // Connect to Arduino
 arduino = new Arduino();
-arduino.connect('ws://YOUR_ARDUINO_IP:81/');
+arduino.connect('YOUR_ARDUINO_IP');
 
 // Set up the LED pin
 arduino.pinMode(13, OUTPUT);

@@ -35,7 +35,7 @@ This is the simplest possible example of Arduino-to-web communication. It create
 1. Open `sketch.js` in a text or code editor
 2. Update this line with your Arduino's IP address:
    ```javascript
-   let ArduinoIP = 'ws://192.168.1.XXX:81/';
+   let ArduinoIP = '192.168.1.134';
    ```
 3. Open `index.html` in your web browser
 
