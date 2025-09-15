@@ -1,4 +1,4 @@
-# Bouncing Circle Control Example
+# P5js Bouncing Circle Example
 
 An interactive p5.js example showing how to control an Arduino LED based on mouse position and read sensor data to control graphics using the Arduino2JS WebSocket communication system.
 
