@@ -68,7 +68,7 @@ class Arduino {
     }
 
     connect(deviceIP) {
-        this.deviceIP = deviceIP;
+        this.deviceIP = `ws://${deviceIP}:81/`;
         this.reconnectAttempts = 0;
         this._connect();
     }

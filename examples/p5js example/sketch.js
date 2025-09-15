@@ -5,7 +5,7 @@
 // GPL-3.0 License
 // ==============================================================
 
-let ArduinoIP = 'ws://172.20.10.13:81/';
+let ArduinoIP = '172.20.10.13';
 
 let arduino;
 let circleX, circleY;
