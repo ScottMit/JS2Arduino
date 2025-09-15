@@ -13,7 +13,7 @@ let dx, dy;
 
 // pin globals
 const LED = 13;
-const POTPIN = A0;
+const POTPIN = A0; // Change this to match the pin you are using
 
 function setup() {
     createCanvas(600, 600);
