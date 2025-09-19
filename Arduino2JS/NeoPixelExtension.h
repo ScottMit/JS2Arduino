@@ -4,7 +4,7 @@
 #include <Adafruit_NeoPixel.h>
 
 // -------------------------------------------------------------------
-// NeoPixel Extension Actions (unchanged)
+// NeoPixel Extension Actions (match defs.h)
 // -------------------------------------------------------------------
 #define NEO_INIT 10        // Setup strip: params = [stripId, pin, numPixels, type]
 #define NEO_SET_PIXEL 11   // Set single pixel: params = [stripId, index, r, g, b (, w)]

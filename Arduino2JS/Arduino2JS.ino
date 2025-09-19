@@ -27,8 +27,32 @@
 #include "defs.h"
 #include "secrets.h"
 
+// -------------------------------------------------------------------
+// Function Declarations
+// -------------------------------------------------------------------
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length);
+void handleCoreAction(int pin, int action, JsonArray& params);
+void performRead(int pin, int action);
+void registerRead(int pin, int action, unsigned long interval);
+void handleExtensionAction(int deviceId, int action, JsonArray& params);
+void sendReturnMessage(int id, int type, float value);
+int getIndex(int theId);
+void unregisterAction(int pin);
+void platformInit();
+void platformLoop();
+
+#ifdef PLATFORM_UNO_R4
+  void displayIP();
+  void matrixCallback();
+  void matrixText(const char* text, int scroll);
+  const char* ipAddressToString(const IPAddress& ip);
+#endif
+
+// -------------------------------------------------------------------
 // Extension includes
+// -------------------------------------------------------------------
 #include "NeoPixelExtension.h"
+#include "ServoExtension.h"
 
 // -------------------------------------------------------------------
 // WebSocket
@@ -57,27 +81,6 @@ struct Actions {
   unsigned long interval;
 };
 Actions registeredActions[NUM_ACTIONS];
-
-// -------------------------------------------------------------------
-// Function Declarations
-// -------------------------------------------------------------------
-void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length);
-void handleCoreAction(int pin, int action, JsonArray& params);
-void performRead(int pin, int action);
-void registerRead(int pin, int action, unsigned long interval);
-void handleExtensionAction(int deviceId, int action, JsonArray& params);
-void sendReturnMessage(int id, int type, float value);
-int getIndex(int theId);
-void unregisterAction(int pin);
-void platformInit();
-void platformLoop();
-
-#ifdef PLATFORM_UNO_R4
-  void displayIP();
-  void matrixCallback();
-  void matrixText(const char* text, int scroll);
-  const char* ipAddressToString(const IPAddress& ip);
-#endif
 
 // -------------------------------------------------------------------
 // Setup
@@ -281,6 +284,10 @@ void handleExtensionAction(int deviceId, int action, JsonArray& params) {
   switch (deviceId) {
     case NEO_PIXEL:
       NeoPixelExt::handle(action, params);
+      break;
+    
+    case SERVO_CONTROL:
+      ServoExt::handle(action, params);
       break;
     
     // Future extensions go here

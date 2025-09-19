@@ -1,7 +1,7 @@
 // ==============================================================
 // defs.h
 // Protocol IDs and Action Codes
-// Version v0.13
+// Version v0.14
 // by Scott Mitchell
 // GPL-3.0 License
 // ==============================================================
@@ -41,6 +41,7 @@
 // -------------------------------------------------------------------
 #define RESERVED_START 200
 #define NEO_PIXEL      200
+#define SERVO_CONTROL  201
 
 // -------------------------------------------------------------------
 // NeoPixel Extension Actions (10-19)
@@ -53,9 +54,18 @@
 #define NEO_SHOW          15     // Push buffer to LEDs: params = [stripId]
 
 // -------------------------------------------------------------------
+// Servo Extension Actions (20-29)
+// -------------------------------------------------------------------
+#define SERVO_ATTACH      20     // Attach servo: params = [servoId, pin]
+#define SERVO_DETACH      21     // Detach servo: params = [servoId]
+#define SERVO_WRITE       22     // Write angle: params = [servoId, angle]
+#define SERVO_WRITE_MICROSECONDS 23 // Write microseconds: params = [servoId, microseconds]
+#define SERVO_READ        24     // Read current angle: params = [servoId]
+#define SERVO_ATTACHED    25     // Check if attached: params = [servoId]
+
+// -------------------------------------------------------------------
 // Future Extension IDs
 // -------------------------------------------------------------------
-// #define SERVO_CONTROL  201
 // #define LCD_DISPLAY    202
 // #define SENSOR_HUB     203
 
