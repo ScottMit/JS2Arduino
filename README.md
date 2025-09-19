@@ -134,19 +134,73 @@ arduino.analogWrite(9, sliderValue); // 0-255
 ```
 
 ### NeoPixel LED Strips
+
+#### Single Strip
 ```javascript
 // Set up a strip of 8 LEDs on pin 6
-arduino.attach('neo', new NeoPixel(arduino));
-arduino.neo.init(6, 8);
+arduino.attach('strip', new NeoPixel(arduino));
+arduino.strip.init(6, 8);
 
 // Make first LED red
-arduino.neo.setPixelColor(0, 255, 0, 0);
-arduino.neo.show(); // Always call show() to update LEDs
+arduino.strip.setPixelColor(0, 255, 0, 0);
+arduino.strip.show(); // Always call show() to update LEDs
 
 // Fill all LEDs blue
-let blue = arduino.neo.Color(0, 0, 255);
-arduino.neo.fill(blue);
-arduino.neo.show();
+let blue = arduino.strip.Color(0, 0, 255);
+arduino.strip.fill(blue);
+arduino.strip.show();
+```
+
+#### Multiple Strips
+```javascript
+// Attach multiple NeoPixel strips
+arduino.attach('mainLights', new NeoPixel(arduino));
+arduino.attach('accentLights', new NeoPixel(arduino));
+arduino.attach('backgroundLights', new NeoPixel(arduino));
+
+// Initialize each strip independently
+arduino.mainLights.init(6, 16);        // pin 6, 16 pixels
+arduino.accentLights.init(7, 8);       // pin 7, 8 pixels  
+arduino.backgroundLights.init(8, 32);  // pin 8, 32 pixels
+
+// Set different brightness for each strip
+arduino.mainLights.setBrightness(200);
+arduino.accentLights.setBrightness(100);
+arduino.backgroundLights.setBrightness(50);
+
+// Control each strip independently
+arduino.mainLights.fill(arduino.mainLights.Color(255, 0, 0));     // Red
+arduino.accentLights.fill(arduino.accentLights.Color(0, 255, 0)); // Green
+arduino.backgroundLights.fill(arduino.backgroundLights.Color(0, 0, 255)); // Blue
+
+// Show all changes
+arduino.mainLights.show();
+arduino.accentLights.show();
+arduino.backgroundLights.show();
+```
+
+### Multiple Device Support
+
+You can control multiple instances of the same device type. Each extension automatically gets a unique logical ID:
+
+```javascript
+// Multiple NeoPixel strips with custom names
+arduino.attach('ceiling', new NeoPixel(arduino));     // Gets logical ID 0
+arduino.attach('floor', new NeoPixel(arduino));       // Gets logical ID 1
+arduino.attach('wall', new NeoPixel(arduino));        // Gets logical ID 2
+
+// Each strip can have different configurations
+arduino.ceiling.init(6, 20);    // 20 LEDs on pin 6
+arduino.floor.init(7, 50);      // 50 LEDs on pin 7
+arduino.wall.init(8, 10);       // 10 LEDs on pin 8
+
+// Debug: see what's attached
+console.log(arduino.listExtensions());
+// Output: [
+//   { id: 'ceiling', logicalId: 0, deviceId: 200, type: 'NeoPixel' },
+//   { id: 'floor', logicalId: 1, deviceId: 200, type: 'NeoPixel' },
+//   { id: 'wall', logicalId: 2, deviceId: 200, type: 'NeoPixel' }
+// ]
 ```
 
 ## Pin Reference
@@ -185,6 +239,12 @@ Input only: 34-39 (can't be outputs)
 - Try different pins (2, 4, 5 work well on ESP32)
 - Verify LED strip type (NEO_GRB vs NEO_RGB)
 - NeoPixels Vcc should be connected to 5V, data pin can generally be driven from 5V or 3.3V logic
+- Make sure you're using the updated Arduino firmware that supports multiple strips
+
+### "Multiple NeoPixel strips interfere with each other"
+- This shouldn't happen with the new system - each strip gets a unique logical ID
+- Check that you're using the updated `NeoPixelExtension.h` file
+- Use `arduino.listExtensions()` to verify each strip has a unique logical ID
 
 ### "Sensor readings are jumpy"
 - This is normal - use averaging in your code
@@ -198,12 +258,26 @@ Input only: 34-39 (can't be outputs)
 - `arduino.analogWrite()` - controls brightness/speed (0-255)
 - `arduino.digitalRead()` - reads buttons/switches  
 - `arduino.analogRead()` - reads sensors/potentiometers
+- `arduino.attach(id, extension)` - adds device extensions like NeoPixels
+- `arduino.listExtensions()` - debug info about attached extensions
 
 ### The system automatically handles:
 - Network communication
 - Message timing and throttling  
 - Reconnecting if connection drops
 - Converting between different data formats
+- Unique logical IDs for multiple device instances
+- Extension management and routing
+
+## Arduino Firmware Requirements
+
+The Arduino firmware has been updated to support multiple device instances:
+
+- **Updated `NeoPixelExtension.h`** - Now supports up to 8 independent NeoPixel strips
+- **Updated `defs.h`** - Includes new protocol definitions
+- **Logical ID system** - Each device instance gets a unique identifier
+
+Make sure you're using the latest Arduino firmware files for multiple device support.
 
 ## Next Steps
 
@@ -211,7 +285,8 @@ Input only: 34-39 (can't be outputs)
 2. **Add sensors** - read values and display them on screen
 3. **Combine both** - use sensor data to control outputs
 4. **Make it visual** - use p5.js to create graphics that respond to hardware
-5. **Add extensions** - try NeoPixel strips for colorful displays
+5. **Try multiple devices** - control several NeoPixel strips or other extensions
+6. **Add extensions** - create your own device extensions following the NeoPixel pattern
 
 ## Learning Resources
 
@@ -223,16 +298,16 @@ Input only: 34-39 (can't be outputs)
 ## Project Structure
 ```
 Arduino_to_p5js/           # Arduino code
-├── Arduino2JS.ino    # Main Arduino sketch
-├── defs.h                 # Pin and command definitions
-├── NeoPixelExtension.h    # NeoPixel LED support
+├── Arduino2JS.ino         # Main Arduino sketch
+├── defs.h                 # Pin and command definitions (UPDATED)
+├── NeoPixelExtension.h    # NeoPixel LED support (UPDATED for multiple strips)
 └── secrets.h              # Your WiFi credentials
 
-JS2Arduino/           # Web interface code  
+JS2Arduino/                # Web interface code  
 ├── index.html             # Main web page
 ├── sketch.js              # Your project code (edit this!)
-├── arduinoComs.js         # Arduino communication
-└── neoPixel.js            # NeoPixel web controls
+├── arduinoComs.js         # Arduino communication (UPDATED)
+└── neoPixel.js            # NeoPixel web controls (UPDATED)
 ```
 
 ## Troubleshooting Help
@@ -242,6 +317,7 @@ If you're stuck:
 2. Open browser Developer Tools (F12) to see JavaScript errors
 3. Try the basic LED example first
 4. Make sure both devices are on the same WiFi network
+5. Use `arduino.listExtensions()` to debug extension issues
 
 ## Contributing
 

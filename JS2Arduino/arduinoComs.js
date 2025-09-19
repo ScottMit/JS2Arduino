@@ -2,8 +2,8 @@
 // arduinoComs.js
 // P5js to Arduino WebSocket communication
 // Works with UNO R4 WiFi and ESP32
-// Version v0.12
-// by Scott Mitchell
+// Version v0.14 (with strict FIFO + batching)
+// by Scott Mitchell, modified with batching by ChatGPT
 // GPL-3.0 License
 // ==============================================================
 
@@ -55,6 +55,7 @@ class Arduino {
         this.messageOutInterval = 100;
         this.defaultReadingInterval = 200;
         this.messageQueue = [];
+        this.flushing = false;
 
         // Reconnection properties
         this.deviceIP = null;
@@ -66,6 +67,7 @@ class Arduino {
         this.isReconnecting = false;
 
         this.extensions = {}; // container for attached extensions
+        this.nextLogicalId = 0; // Starting logical ID for extensions
     }
 
     connect(deviceIP) {
@@ -89,18 +91,13 @@ class Arduino {
                 this.reconnectAttempts = 0;
                 this.reconnectDelay = 1000; // Reset delay
 
-                // Clear any pending reconnect timeout
                 if (this.reconnectTimeout) {
                     clearTimeout(this.reconnectTimeout);
                     this.reconnectTimeout = null;
                 }
 
-                // Flush queued messages
-                while (this.messageQueue.length) {
-                    const msg = this.messageQueue.shift();
-                    this.socket.send(JSON.stringify(msg));
-                    console.log('Queued message sent:', JSON.stringify(msg));
-                }
+                // Flush any queued messages in correct order
+                this._flushQueue();
             };
 
             this.socket.onclose = (event) => {
@@ -139,7 +136,6 @@ class Arduino {
 
         this.reconnectAttempts++;
 
-        // Calculate exponential backoff delay
         const delay = Math.min(
             this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts - 1),
             this.maxReconnectDelay
@@ -153,7 +149,6 @@ class Arduino {
         }, delay);
     }
 
-    // Method to manually trigger reconnection
     reconnect() {
         if (this.reconnectTimeout) {
             clearTimeout(this.reconnectTimeout);
@@ -170,9 +165,8 @@ class Arduino {
         this._connect();
     }
 
-    // Method to stop all reconnection attempts
     disconnect() {
-        this.reconnectAttempts = this.maxReconnectAttempts; // Prevent auto-reconnect
+        this.reconnectAttempts = this.maxReconnectAttempts;
 
         if (this.reconnectTimeout) {
             clearTimeout(this.reconnectTimeout);
@@ -188,7 +182,6 @@ class Arduino {
         console.log("Manually disconnected - auto-reconnection disabled");
     }
 
-    // Get connection status info
     getStatus() {
         return {
             connected: this.connected,
@@ -200,30 +193,37 @@ class Arduino {
     }
 
     // ---------------------------
-    // Core send method (multiple data objects supported)
+    // Core send method (strict FIFO + batching)
     // ---------------------------
     send(data) {
         const payload = Array.isArray(data) ? data : [data];
-        const msg = { header: { version: 1 }, data: payload };
+        this.messageQueue.push(...payload);
 
-        if (!this.connected) {
-            // queue the message
-            this.messageQueue.push(msg);
-            console.log('Message queued (not connected):', JSON.stringify(msg));
-            return;
-        }
-
-        try {
-            this.socket.send(JSON.stringify(msg));
-            console.log('Message sent:', JSON.stringify(msg));
-        } catch (error) {
-            console.error('Failed to send message:', error);
-            // Queue the message for retry
-            this.messageQueue.push(msg);
+        if (this.connected && !this.flushing) {
+            this._flushQueue();
         }
     }
 
-    // Event registration
+    _flushQueue() {
+        if (!this.connected || this.flushing || this.messageQueue.length === 0) return;
+        this.flushing = true;
+
+        try {
+            const batched = {
+                header: { version: 1 },
+                data: this.messageQueue.splice(0, this.messageQueue.length)
+            };
+
+            this.socket.send(JSON.stringify(batched));
+            console.log('Batched message sent:', JSON.stringify(batched));
+        } catch (error) {
+            console.error('Failed to send batched message:', error);
+            // leave queue intact for retry
+        } finally {
+            this.flushing = false;
+        }
+    }
+
     registerEvent(pin, type, interval, value = null, threshold = 0) {
         let event = this.registeredEvents.find(e => e.id === pin && e.type === type);
 
@@ -235,11 +235,10 @@ class Arduino {
                 lastUpdate: 0,
                 value: value,
                 lastSentValue: null,
-                threshold: threshold // Minimum change to trigger send
+                threshold: threshold
             };
             this.registeredEvents.push(event);
         } else {
-            // Update existing event
             event.interval = interval;
             event.threshold = threshold;
         }
@@ -247,35 +246,51 @@ class Arduino {
         return event;
     }
 
-    // Helper to check if we should send based on timing and value change
     shouldSend(event, newValue) {
         const now = Date.now();
         const timePassed = now - event.lastUpdate >= event.interval;
 
         if (!timePassed) return false;
 
-        // For output events, check if value changed significantly
         if (event.type === DIGITAL_WRITE || event.type === ANALOG_WRITE) {
-            if (event.lastSentValue === null) return true; // First send
+            if (event.lastSentValue === null) return true;
 
             if (event.type === DIGITAL_WRITE) {
-                return newValue !== event.lastSentValue; // Digital: exact match required
+                return newValue !== event.lastSentValue;
             } else {
-                return Math.abs(newValue - event.lastSentValue) > event.threshold; // Analog: threshold
+                return Math.abs(newValue - event.lastSentValue) > event.threshold;
             }
         }
 
-        return true; // For all other events, always send if time passed
+        return true;
     }
 
-    // ---------------------------
-    // Arduino-like API methods (unchanged)
-    // ---------------------------
+    attach(id, extension) {
+        extension.logicalId = this.nextLogicalId++;
+        this.extensions[id] = extension;
+        this[id] = extension;
+
+        console.log(`Extension '${id}' attached with logical ID ${extension.logicalId} (device type: ${extension.deviceId})`);
+
+        return this;
+    }
+
+    getExtension(id) {
+        return this.extensions[id];
+    }
+
+    listExtensions() {
+        return Object.keys(this.extensions).map(id => ({
+            id: id,
+            logicalId: this.extensions[id].logicalId,
+            deviceId: this.extensions[id].deviceId,
+            type: this.extensions[id].constructor.name
+        }));
+    }
+
     pinMode(pin, mode, interval = this.defaultReadingInterval) {
-        // Remove any existing event for this pin
         this.registeredEvents = this.registeredEvents.filter(e => e.id !== pin);
 
-        // Just send the request to Arduino
         this.send({
             id: pin,
             action: PIN_MODE,
@@ -288,7 +303,6 @@ class Arduino {
     digitalWrite(pin, value, interval = this.messageOutInterval, threshold = 0) {
         const event = this.registerEvent(pin, DIGITAL_WRITE, interval, value, threshold);
 
-        // if new registration or passes send check then send message
         if (event.lastUpdate === 0 || this.shouldSend(event, value)) {
             this.send({ id: pin, action: DIGITAL_WRITE, params: [value] });
             event.lastUpdate = Date.now();
@@ -297,13 +311,9 @@ class Arduino {
     }
 
     analogWrite(pin, value, interval = this.messageOutInterval, threshold = 2) {
-        // Ensure value is an integer first
         const intValue = Math.round(value);
-
-        // Register and work with the cleaned integer value consistently
         const event = this.registerEvent(pin, ANALOG_WRITE, interval, intValue, threshold);
 
-        // if new registration or passes send check then send message
         if (event.lastUpdate === 0 || this.shouldSend(event, intValue)) {
             this.send({ id: pin, action: ANALOG_WRITE, params: [intValue] });
             event.lastUpdate = Date.now();
@@ -314,7 +324,7 @@ class Arduino {
     digitalRead(pin, interval = this.defaultReadingInterval) {
         const event = this.registerEvent(pin, DIGITAL_READ, interval);
 
-        if (event.lastUpdate === 0) { // New registration
+        if (event.lastUpdate === 0) {
             this.send({ id: pin, action: DIGITAL_READ, params: [interval] });
             event.lastUpdate = Date.now();
         }
@@ -325,7 +335,7 @@ class Arduino {
     analogRead(pin, interval = this.defaultReadingInterval) {
         const event = this.registerEvent(pin, ANALOG_READ, interval);
 
-        if (event.lastUpdate === 0) { // New registration
+        if (event.lastUpdate === 0) {
             this.send({ id: pin, action: ANALOG_READ, params: [interval] });
             event.lastUpdate = Date.now();
         }
@@ -333,9 +343,6 @@ class Arduino {
         return event.value ?? 0;
     }
 
-    // ---------------------------
-    // Internal helpers
-    // ---------------------------
     _modeToType(mode) {
         switch (mode) {
             case INPUT:
@@ -363,16 +370,5 @@ class Arduino {
                 });
             }
         });
-    }
-
-    // ---------------------------
-    // Extension handling
-    // ---------------------------
-    attach(id, extension) {
-        this.extensions[id] = extension;
-        if (extension.name) {
-            this[extension.name] = extension; // shortcut property
-        }
-        return this; // chainable
     }
 }

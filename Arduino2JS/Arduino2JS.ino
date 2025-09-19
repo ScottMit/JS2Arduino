@@ -191,9 +191,9 @@ void platformLoop() {
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length) {
   switch(type) {
     case WStype_DISCONNECTED:
-      Serial.print("[");
-      Serial.print(num);
-      Serial.println("] Disconnected!");
+      // Serial.print("[");
+      // Serial.print(num);
+      // Serial.println("] Disconnected!");
       break;
       
     case WStype_CONNECTED:
