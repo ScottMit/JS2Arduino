@@ -202,6 +202,7 @@ function pulseEffect(strip, numPixels) {
 - Check Serial Monitor for connection status
 
 **"Performance is slow/laggy"**
+- There is a known bug with WebSockets on the Arduino UNO R4 which may impact performance
 - Reduce update frequency by increasing threshold values
 - Use `arduino.neoStrip1.setThreshold(10)` to reduce message frequency
 - Consider fewer LEDs for faster updates
