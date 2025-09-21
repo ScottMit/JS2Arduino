@@ -1,177 +1,327 @@
-# P5js Bouncing Circle Example
+# Ultrasonic Sensor Distance Visualization Example
 
-An interactive p5.js example showing how to control an Arduino LED based on mouse position and read sensor data to control graphics using the Arduino2JS WebSocket communication system.
+An interactive p5.js example demonstrating real-time ultrasonic distance sensing using the Arduino2JS WebSocket communication system. Visualize distance measurements as live graphics in your web browser.
 
 ## What This Example Does
 
-This example demonstrates bidirectional Arduino-to-web communication by creating an interactive bouncing circle:
-- **Circle bounces around the canvas** - Using p5.js animation
-- **Circle size controlled by Arduino sensor** - Connect a potentiometer to pin A0 to control the circle size
-- **LED controlled by mouse position** - When you hover your mouse over the bouncing circle, the Arduino LED turns on
-- **Real-time sensor feedback** - The potentiometer reading directly affects the circle size in real-time
+This example creates a real-time distance visualization system:
+- **Live distance measurement** - HC-SR04 ultrasonic sensor measures distance to objects
+- **Visual distance bar** - Animated bar graph shows current distance reading
+- **Color-coded feedback** - Distance bar changes color from red (close) to green (far)
+- **Real-time updates** - Distance measurements update continuously in the browser
+- **Range indicators** - Scale markers show distance measurements in centimeters
 
 ## Hardware Requirements
 
 - **Arduino UNO R4 WiFi** OR **ESP32 development board**
 - **WiFi network** (Arduino and computer must be on the same network)
-- **Potentiometer** (10kΩ recommended)
+- **HC-SR04 Ultrasonic Sensor** (or compatible ultrasonic distance sensor)
 - **Breadboard and jumper wires**
 
-### For Arduino UNO R4 WiFi
-- Pin 13 has a built-in LED - no additional LED components needed
-- Connect potentiometer: center pin to A0, outer pins to 5V and GND
+### Ultrasonic Sensor Wiring
 
-### For ESP32
-- **LED** (any color) and **220Ω resistor**
-- Connect LED + resistor between pin 13 and ground (LED long leg to pin 13)
-- Connect potentiometer: center pin to pin 1, outer pins to 3.3V and GND
+#### Arduino UNO R4 WiFi
+- **Sensor VCC** → **5V** (Arduino)
+- **Sensor GND** → **GND** (Arduino)
+- **Sensor Trig** → **Pin 6** (configurable in code)
+- **Sensor Echo** → **Pin 7** (configurable in code)
+
+#### ESP32
+- **Sensor VCC** → **5V** (or 3.3V - check sensor specs)
+- **Sensor GND** → **GND** (Arduino)
+- **Sensor Trig** → **Pin 6** (configurable in code)
+- **Sensor Echo** → **Pin 7** (configurable in code)
+
+### Sensor Types Supported
+- **HC-SR04** (most common, 4-wire)
+- **HC-SR05** (5-wire version)
+- **US-100** (compatible mode)
+- **3-wire sensors** (single pin for trigger/echo)
 
 ## Software Requirements
 
-- **Arduino IDE** (for uploading code to Arduino)
+- **Arduino IDE** (for uploading firmware)
 - **Web browser** (Chrome, Firefox, Safari, etc.)
 - **Text editor** (for updating the IP address)
+
+### Arduino Libraries Required
+- **WebSocketsServer** (by Markus Sattler)
+- **ArduinoJson** (by Benoit Blanchon)
+- No additional sensor libraries needed - ultrasonic support is built into the Arduino2JS system
+
+Install via Arduino IDE: Tools → Manage Libraries
 
 ## Quick Start
 
 ### 1. Set Up Arduino Hardware
 
-1. **Connect the potentiometer:**
-   - Center pin → A0
-   - One outer pin → 5V (UNO R4) or 3.3V (ESP32)
-   - Other outer pin → GND
+1. **Connect the ultrasonic sensor:**
+   - VCC (red) → 5V pin
+   - GND (black) → GND pin
+   - Trig (usually blue/green) → Pin 6
+   - Echo (usually white/yellow) → Pin 7
 
-2. **For ESP32 only - Connect LED:**
-   - LED long leg → Pin 13
-   - LED short leg → 220Ω resistor → GND
+2. **Test sensor placement:**
+   - Point sensor away from obstacles for testing
+   - Sensor works best with flat surfaces perpendicular to the sensor
+   - Effective range: 2cm to 200cm (depending on sensor model)
 
 ### 2. Set Up Arduino Software
 
-1. Download the Arduino2JS folder and open the `Arduino2JS.ino` file in the Arduino IDE
-2. Update your WiFi credentials in the `secrets.h` tab
-3. Upload the sketch to your Arduino
-4. Open the Arduino IDE Serial Monitor and note the IP address shown
-   - **UNO R4:** IP also displays on the board's LED matrix
+1. Download the Arduino2JS folder and open `Arduino2JS.ino` in Arduino IDE
+2. Make sure `UltrasonicExtension.h` is included in your Arduino2JS folder
+3. Install the required libraries (WebSocketsServer, ArduinoJson)
+4. Update your WiFi credentials in the `secrets.h` tab:
+   ```cpp
+   #define SECRET_SSID "YourWiFiName" 
+   #define SECRET_PASS "YourWiFiPassword"
+   ```
+5. Upload the sketch to your Arduino
+6. Note the IP address from Serial Monitor or LED matrix (UNO R4)
 
 ### 3. Set Up Web Interface
 
-1. Open `sketch.js` in a text or code editor
+1. Open `sketch.js` in a text editor
 2. Update this line with your Arduino's IP address:
    ```javascript
    let ArduinoIP = '192.168.1.134';
    ```
-3. Open `index.html` in your web browser
+3. **Optional:** Adjust sensor pins if needed:
+   ```javascript
+   arduino.ultrasonicSensor.attach(6, 7); // Trig pin 6, Echo pin 7
+   ```
+4. Make sure `ultrasonic.js` is included in your project folder
+5. Open `index.html` in your web browser
 
 ### 4. Test It
 
-- **Circle should be bouncing** around the canvas
-- **Turn the potentiometer** - the circle size should change
-- **Hover over the circle** - the Arduino LED should turn on
-- **Move mouse away** - the LED should turn off
+- **Distance bar should appear** on the right side of the canvas
+- **Move objects** in front of the sensor - the bar should change height and color
+- **Check console** for connection status and distance readings
+- **Effective range** is typically 2-200cm depending on your sensor
 
 ## How It Works
 
-The example demonstrates both input and output communication:
+The example demonstrates complete ultrasonic sensor control:
 
 ```javascript
-// Connect to Arduino
+// Connect to Arduino and attach ultrasonic sensor
 arduino = new Arduino();
 arduino.connect(ArduinoIP);
+arduino.attach('ultrasonicSensor', new Ultrasonic(arduino));
 
-// Set up pins
-arduino.pinMode(13, OUTPUT);           // LED output
-arduino.pinMode(A0, ANALOG_INPUT);     // Potentiometer input
+// Attach sensor (4-wire mode: separate trigger and echo pins)
+arduino.ultrasonicSensor.attach(6, 7); // Trig pin 6, Echo pin 7
 
-// Read sensor data
-let sensorValue = arduino.analogRead(A0);  // Returns 0-1023
+// For 3-wire sensors (single pin for trigger/echo):
+// arduino.ultrasonicSensor.attach(6); // Single pin mode
 
-// Control LED based on interaction
-arduino.digitalWrite(13, HIGH);  // Turn LED on
-arduino.digitalWrite(13, LOW);   // Turn LED off
+// Set timeout for longer range detection
+arduino.ultrasonicSensor.setTimeout(40); // 40ms timeout
+
+// Read distance
+let distance = arduino.ultrasonicSensor.read(); // Returns distance in cm
+
+// Read in different units
+let distanceInches = arduino.ultrasonicSensor.read(INCH);
+
+// Convenience methods
+let distanceCM = arduino.ultrasonicSensor.readCM();
+let distanceInches = arduino.ultrasonicSensor.readInches();
+
+// Check if object is within range
+if (arduino.ultrasonicSensor.isInRange(50)) { // Within 50cm
+    console.log("Object detected nearby");
+}
 ```
 
 ## Code Explanation
 
-### sketch.js
-- **p5.js setup():** Creates canvas, connects to Arduino, configures pins
-- **p5.js draw():** Main animation loop that:
-  - Reads potentiometer value with `arduino.analogRead(A0)`
-  - Maps sensor value to circle size
-  - Checks if mouse is over the circle
-  - Controls LED based on mouse position
-  - Animates bouncing circle movement
+### sketch.js Features
+- **Real-time Reading**: Continuously reads distance from ultrasonic sensor
+- **Visual Mapping**: Maps distance (0-200cm) to bar height and color
+- **Color Coding**: Uses HSB color mode for smooth color transitions
+- **Connection Status**: Shows Arduino connection status
+- **Responsive Design**: Clean, centered layout with scale markers
 
-### index.html
-- Loads p5.js library for graphics and animation
-- Loads the Arduino communication library (`arduinoComs.js`)
-- Loads the example code (`sketch.js`)
-- Includes basic CSS styling
+### Interactive Elements
+- **Distance Bar**: Height represents current distance measurement
+- **Color Gradient**: Red (close) to green (far) color coding
+- **Scale Markers**: Distance markers every 50cm for reference
+- **Status Display**: Connection status and current distance reading
+- **Range Detection**: Visual feedback when objects are detected
 
-### Interactive Features
-- **Sensor Input:** Potentiometer on A0 controls circle size (0-1023 → small to large circle)
-- **Mouse Interaction:** LED turns on when mouse hovers over the moving circle
-- **Visual Feedback:** Circle changes color (white/green) when mouse hovers
-- **Physics:** Circle bounces off canvas edges realistically
+## Advanced Features
+
+### Multiple Sensors
+```javascript
+// Attach multiple ultrasonic sensors
+arduino.attach('frontSensor', new Ultrasonic(arduino));
+arduino.attach('backSensor', new Ultrasonic(arduino));
+
+// Configure each independently  
+arduino.frontSensor.attach(6, 7);  // Front sensor
+arduino.backSensor.attach(8, 9);   // Back sensor
+
+// Read from each sensor
+let frontDistance = arduino.frontSensor.readCM();
+let backDistance = arduino.backSensor.readCM();
+```
+
+### 3-Wire Sensor Support
+```javascript
+// For sensors with combined trigger/echo pin
+arduino.ultrasonicSensor.attach(6); // Single pin mode
+```
+
+### Advanced Configuration
+```javascript
+// Set custom timeout (default is 20ms)
+arduino.ultrasonicSensor.setTimeout(50); // 50ms for longer range
+
+// Set reading throttle to reduce update frequency
+arduino.ultrasonicSensor.setReadThrottle(100); // Update every 100ms max
+```
+
+### Proximity Detection
+```javascript
+// Check if object is within specified range
+if (arduino.ultrasonicSensor.isInRange(30, CM)) {
+    console.log("Object within 30cm");
+}
+
+// Get sensor state information
+let state = arduino.ultrasonicSensor.getState();
+console.log("Sensor info:", state);
+```
 
 ## Troubleshooting
 
-**"Circle doesn't change size"**
-- Check potentiometer wiring (center pin to A0, outer pins to power/ground)
-- Try turning the potentiometer - you should see the circle size change
-- Check browser console for connection messages
+**"Distance bar doesn't move"**
+- Check sensor wiring (VCC to 5V, GND to GND, Trig to pin 6, Echo to pin 7)
+- Verify sensor is pointed at an object within range (2-200cm)
+- Try moving a large flat object (like a book) in front of the sensor
+- Check browser console for distance readings
 
-**"LED doesn't turn on when hovering"**
-- **UNO R4:** Built-in LED should be visible on the board
-- **ESP32:** Check LED wiring (long leg to pin 13, short leg through resistor to ground)
-- Make sure mouse cursor is actually over the circle
+**"Distance readings are erratic"**
+- Ensure sensor is mounted stable and level
+- Point sensor at flat, perpendicular surfaces for best results
+- Avoid soft materials (fabric, foam) which absorb ultrasonic waves
+- Increase timeout: `arduino.ultrasonicSensor.setTimeout(50)`
 
-**"Circle doesn't bounce/move"**
-- This is normal p5.js animation - should work if the page loads correctly
-- Check browser console for JavaScript errors
+**"No distance readings (always 0 or -1)"**
+- Check power connections (VCC and GND)
+- Verify trigger and echo pins are connected correctly
+- Try swapping trigger and echo pin connections
+- Some sensors require 5V VCC - check sensor specifications
 
-**"General connection issues"**
-- Check the IP address in `sketch.js` matches your Arduino's IP
-- Make sure Arduino and computer are on the same WiFi network
-- Check Arduino Serial Monitor and browser console for connection messages
+**"Web interface doesn't show sensor data"**
+- Check browser console for connection errors
+- Verify IP address matches Arduino's IP
+- Make sure `ultrasonic.js` is loaded in your HTML
+- Confirm Arduino shows "Client connected" message
+
+**"Sensor works intermittently"**
+- Power supply issue - ensure Arduino has adequate power via USB
+- Try external 5V power supply for Arduino if using many devices
+- Check for loose connections on breadboard
+- Add small delay between readings if updating too frequently
 
 **"Arduino won't connect to WiFi"**
-- Check `secrets.h` has correct WiFi name and password
-- Make sure WiFi network allows device connections
-- Try restarting the Arduino
+- Double-check WiFi credentials in `secrets.h`
+- Try 2.4GHz network (avoid 5GHz-only networks)
+- Check Serial Monitor for connection status
 
 ## Understanding the Code
 
-This example shows several important concepts:
+This example demonstrates several key concepts:
 
-1. **Bidirectional Communication:** Both reading from Arduino (sensor) and writing to Arduino (LED)
-2. **Real-time Interaction:** Sensor changes immediately affect the graphics
-3. **Event-driven Control:** Mouse position determines Arduino output
-4. **Animation Integration:** Arduino data seamlessly integrated with p5.js animation
+1. **Extension System**: Uses the Arduino2JS Ultrasonic extension for sensor control
+2. **Real-time Visualization**: Live data streaming from Arduino to web browser
+3. **Sensor Configuration**: Proper timeout and pin configuration for reliable readings
+4. **Visual Mapping**: Converting distance measurements to visual representations
+5. **Error Handling**: Graceful handling of sensor timeouts and connection issues
+
+## Sensor Specifications
+
+### HC-SR04 Specifications
+- **Operating Voltage**: 5V DC
+- **Operating Current**: 15mA
+- **Frequency**: 40KHz
+- **Range**: 2cm - 4m
+- **Accuracy**: ±3mm
+- **Measuring Angle**: 15°
+- **Trigger Pulse**: 10µs TTL pulse
+- **Echo Pulse**: Proportional to distance
 
 ## Next Steps
 
 Once this example works, you can:
 
-1. **Add more sensors** - Temperature, light, distance sensors
-2. **Add more outputs** - Multiple LEDs, servo motors, buzzers
-3. **Try different interactions** - Keyboard control, button presses
-4. **Advanced graphics** - More complex animations driven by sensor data
-5. **Try the NeoPixel extension** - Control colorful LED strips
+1. **Add multiple sensors** - Create 360° distance monitoring
+2. **Combine with other devices** - Control LEDs or servos based on distance
+3. **Create proximity alarms** - Visual/audio alerts when objects get too close
+4. **Data logging** - Record distance measurements over time
+5. **Advanced visualizations** - 3D distance plots, radar-style displays
+6. **Robotics projects** - Obstacle avoidance, room mapping
+
+## Configuration Options
+
+### Sensor Configuration
+```javascript
+// Different sensor modes
+arduino.ultrasonicSensor.attach(6, 7);  // 4-wire mode (separate trigger/echo)
+arduino.ultrasonicSensor.attach(6);     // 3-wire mode (combined trigger/echo)
+
+// Timeout configuration
+arduino.ultrasonicSensor.setTimeout(30);  // 30ms timeout (default: 20ms)
+arduino.ultrasonicSensor.setTimeout(100); // 100ms for very long range
+```
+
+### Performance Tuning
+```javascript
+// Reduce update frequency for better performance
+arduino.ultrasonicSensor.setReadThrottle(50); // Max one reading every 50ms
+
+// Adjust visualization range
+let maxDistance = 100; // Show distances up to 100cm instead of 200cm
+```
 
 ## File Structure
 ```
-JS2Arduino/
-├── index.html      # Web interface with p5.js
-├── sketch.js       # Your example code (edit the IP here!)
-├── style.css       # Basic styling
-├── arduinoComs.js  # Arduino communication library
-└── README.md       # This file
+examples/ultrasonic-sensor/
+├── index.html          # Web interface with p5.js
+├── sketch.js           # Ultrasonic sensor code (edit IP here!)
+├── style.css           # Basic styling  
+├── ../../JS2Arduino/   # Arduino communication libraries
+│   ├── arduinoComs.js  # Core communication
+│   └── ultrasonic.js   # Ultrasonic extension
+└── README.md           # This file
 ```
 
 ## Learn More
 
-This example uses the Arduino2JS system. See the main project README for:
-- More complex examples
-- NeoPixel LED strip control
-- Complete sensor reading examples  
-- Full API documentation
+This example uses the Arduino2JS system's Ultrasonic extension. See the main project README for:
+- Complete API documentation
+- Multiple device support examples
+- Advanced sensor techniques
+- Troubleshooting guide
+
+## Hardware Notes
+
+### Power Requirements
+- **HC-SR04**: 5V VCC recommended, 15mA current draw
+- **3.3V operation**: Some sensors work with 3.3V but may have reduced range
+- **Multiple sensors**: Arduino 5V pin can typically handle 2-3 sensors
+
+### Signal Quality
+- **Flat surfaces**: Work best for accurate readings
+- **Angle sensitivity**: ±15° cone for most sensors
+- **Soft materials**: Fabric, foam may not reflect ultrasonic waves well
+- **Temperature effects**: Readings may vary with temperature changes
+
+### Mounting Tips
+- **Stable mounting**: Vibration can cause erratic readings
+- **Avoid obstacles**: Clear path between sensor and target
+- **Multiple sensors**: Space apart to avoid interference
+- **Cable length**: Keep wires short (under 12 inches) for best signal quality
