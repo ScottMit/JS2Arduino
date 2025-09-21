@@ -106,10 +106,10 @@ Install WebSocketsServer and ArduinoJson via Arduino IDE: Tools → Manage Libra
 The example demonstrates complete servo control with Arduino-like functions:
 
 ```javascript
-// Connect to Arduino and attach servo
+// Connect to Arduino and add servo
 arduino = new Arduino();
 arduino.connect(ArduinoIP);
-arduino.attach('myServo', new Servo(arduino));
+arduino.add('myServo', new Servo(arduino));
 
 // Attach servo to pin (like Arduino servo.attach())
 arduino.myServo.attach(5);
@@ -150,9 +150,9 @@ arduino.myServo.detach();
 
 ### Multiple Servos
 ```javascript
-// Attach multiple servo motors
-arduino.attach('pan', new Servo(arduino));
-arduino.attach('tilt', new Servo(arduino));
+// Add multiple servo motors
+arduino.add('pan', new Servo(arduino));
+arduino.add('tilt', new Servo(arduino));
 
 // Configure each independently  
 arduino.pan.attach(5);   // Pan servo on pin 5

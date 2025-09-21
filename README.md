@@ -144,7 +144,7 @@ arduino.analogWrite(9, sliderValue); // 0-255
 #### Single Strip
 ```javascript
 // Set up a strip of 8 LEDs on pin 6
-arduino.attach('strip', new NeoPixel(arduino));
+arduino.add('strip', new NeoPixel(arduino));
 arduino.strip.init(6, 8);
 
 // Make first LED red
@@ -159,10 +159,10 @@ arduino.strip.show();
 
 #### Multiple Strips
 ```javascript
-// Attach multiple NeoPixel strips
-arduino.attach('mainLights', new NeoPixel(arduino));
-arduino.attach('accentLights', new NeoPixel(arduino));
-arduino.attach('backgroundLights', new NeoPixel(arduino));
+// Add multiple NeoPixel strips
+arduino.add('mainLights', new NeoPixel(arduino));
+arduino.add('accentLights', new NeoPixel(arduino));
+arduino.add('backgroundLights', new NeoPixel(arduino));
 
 // Initialize each strip independently
 arduino.mainLights.init(6, 16);        // pin 6, 16 pixels
@@ -189,8 +189,8 @@ arduino.backgroundLights.show();
 
 #### Single Servo
 ```javascript
-// Attach a servo motor extension
-arduino.attach('myServo', new Servo(arduino));
+// Add a servo motor extension
+arduino.add('myServo', new Servo(arduino));
 
 // Attach servo to pin 9
 arduino.myServo.attach(9);
@@ -209,8 +209,8 @@ arduino.myServo.max();    // Go to 180°
 #### Multiple Servos
 ```javascript
 // Control multiple servos independently
-arduino.attach('pan', new Servo(arduino));
-arduino.attach('tilt', new Servo(arduino));
+arduino.add('pan', new Servo(arduino));
+arduino.add('tilt', new Servo(arduino));
 
 arduino.pan.attach(9);
 arduino.tilt.attach(10);
@@ -233,8 +233,8 @@ await arduino.myServo.sweep(0, 180, 3000, 100);
 
 #### Single Sensor
 ```javascript
-// Attach an ultrasonic sensor
-arduino.attach('mySensor', new Ultrasonic(arduino));
+// Add an ultrasonic sensor
+arduino.add('mySensor', new Ultrasonic(arduino));
 
 // Attach sensor (4-wire mode: separate trigger and echo pins)
 arduino.mySensor.attach(6, 7); // Trig pin 6, Echo pin 7
@@ -262,9 +262,9 @@ if (arduino.mySensor.isInRange(50)) { // Within 50cm
 #### Multiple Sensors
 ```javascript
 // Control multiple ultrasonic sensors independently
-arduino.attach('frontSensor', new Ultrasonic(arduino));
-arduino.attach('backSensor', new Ultrasonic(arduino));
-arduino.attach('sideSensor', new Ultrasonic(arduino));
+arduino.add('frontSensor', new Ultrasonic(arduino));
+arduino.add('backSensor', new Ultrasonic(arduino));
+arduino.add('sideSensor', new Ultrasonic(arduino));
 
 arduino.frontSensor.attach(6, 7);  // Trig pin 6, Echo pin 7
 arduino.backSensor.attach(8, 9);   // Trig pin 8, Echo pin 9
@@ -282,17 +282,17 @@ You can control multiple instances of the same device type. Each extension autom
 
 ```javascript
 // Multiple NeoPixel strips with custom names
-arduino.attach('ceiling', new NeoPixel(arduino));     // Gets logical ID 0
-arduino.attach('floor', new NeoPixel(arduino));       // Gets logical ID 1
-arduino.attach('wall', new NeoPixel(arduino));        // Gets logical ID 2
+arduino.add('ceiling', new NeoPixel(arduino));     // Gets logical ID 0
+arduino.add('floor', new NeoPixel(arduino));       // Gets logical ID 1
+arduino.add('wall', new NeoPixel(arduino));        // Gets logical ID 2
 
 // Multiple servos
-arduino.attach('servo1', new Servo(arduino));         // Gets logical ID 0
-arduino.attach('servo2', new Servo(arduino));         // Gets logical ID 1
+arduino.add('servo1', new Servo(arduino));         // Gets logical ID 0
+arduino.add('servo2', new Servo(arduino));         // Gets logical ID 1
 
 // Multiple ultrasonic sensors
-arduino.attach('frontSensor', new Ultrasonic(arduino)); // Gets logical ID 0
-arduino.attach('backSensor', new Ultrasonic(arduino));  // Gets logical ID 1
+arduino.add('frontSensor', new Ultrasonic(arduino)); // Gets logical ID 0
+arduino.add('backSensor', new Ultrasonic(arduino));  // Gets logical ID 1
 
 // Each device can have different configurations
 arduino.ceiling.init(6, 20);    // 20 LEDs on pin 6
@@ -305,7 +305,7 @@ arduino.servo2.attach(10);      // Servo on pin 10
 arduino.frontSensor.attach(6, 7); // Ultrasonic trig pin 6, echo pin 7
 arduino.backSensor.attach(8, 9);  // Ultrasonic trig pin 8, echo pin 9
 
-// Debug: see what's attached
+// Debug: see what's added
 console.log(arduino.listExtensions());
 // Output: [
 //   { id: 'ceiling', logicalId: 0, deviceId: 200, type: 'NeoPixel' },
@@ -515,7 +515,7 @@ class MyExtension {
 - `arduino.analogWrite()` - PWM output control (0-255)
 - `arduino.digitalRead()` - reads digital inputs (0 or 1)
 - `arduino.analogRead()` - reads analog inputs (0-1023 UNO R4, 0-4095 ESP32)
-- `arduino.attach(id, extension)` - adds device extensions
+- `arduino.add(id, extension)` - adds device extensions
 - `arduino.listExtensions()` - debug info about attached devices
 
 ### Arduino Side (Firmware)

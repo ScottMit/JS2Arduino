@@ -105,10 +105,10 @@ Install via Arduino IDE: Tools → Manage Libraries
 The example demonstrates complete ultrasonic sensor control:
 
 ```javascript
-// Connect to Arduino and attach ultrasonic sensor
+// Connect to Arduino and add ultrasonic sensor
 arduino = new Arduino();
 arduino.connect(ArduinoIP);
-arduino.attach('ultrasonicSensor', new Ultrasonic(arduino));
+arduino.add('ultrasonicSensor', new Ultrasonic(arduino));
 
 // Attach sensor (4-wire mode: separate trigger and echo pins)
 arduino.ultrasonicSensor.attach(6, 7); // Trig pin 6, Echo pin 7
@@ -155,9 +155,9 @@ if (arduino.ultrasonicSensor.isInRange(50)) { // Within 50cm
 
 ### Multiple Sensors
 ```javascript
-// Attach multiple ultrasonic sensors
-arduino.attach('frontSensor', new Ultrasonic(arduino));
-arduino.attach('backSensor', new Ultrasonic(arduino));
+// Add multiple ultrasonic sensors
+arduino.add('frontSensor', new Ultrasonic(arduino));
+arduino.add('backSensor', new Ultrasonic(arduino));
 
 // Configure each independently  
 arduino.frontSensor.attach(6, 7);  // Front sensor
