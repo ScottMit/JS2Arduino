@@ -20,7 +20,7 @@ function setup() {
     arduino.connect(ArduinoIP);
 
     // Attach servo to the Arduino
-    arduino.attach('myServo', new Servo(arduino));
+    arduino.add('myServo', new Servo(arduino));
 
     // Attach servo to pin 9 (common servo pin)
     arduino.myServo.attach(5);

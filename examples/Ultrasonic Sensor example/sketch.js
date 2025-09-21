@@ -20,7 +20,7 @@ function setup() {
     arduino.connect(ArduinoIP);
 
     // attach ultrasonic sensor to the Arduino
-    arduino.attach('ultrasonicSensor', new Ultrasonic(arduino));
+    arduino.add('ultrasonicSensor', new Ultrasonic(arduino));
 
     // Attach sensor: trig pin 7, echo pin 8
     arduino.ultrasonicSensor.attach(6, 7);

@@ -266,12 +266,12 @@ class Arduino {
         return true;
     }
 
-    attach(id, extension) {
+    add(id, extension) {
         extension.logicalId = this.nextLogicalId++;
         this.extensions[id] = extension;
         this[id] = extension;
 
-        console.log(`Extension '${id}' attached with logical ID ${extension.logicalId} (device type: ${extension.deviceId})`);
+        console.log(`Extension '${id}' added with logical ID ${extension.logicalId} (device type: ${extension.deviceId})`);
 
         return this;
     }

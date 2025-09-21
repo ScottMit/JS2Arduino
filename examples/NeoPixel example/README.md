@@ -101,10 +101,10 @@ Install via Arduino IDE: Tools → Manage Libraries
 The example demonstrates advanced NeoPixel control with optimized performance:
 
 ```javascript
-// Connect to Arduino and add NeoPixel strip
+// Connect to Arduino and attach NeoPixel strip
 arduino = new Arduino();
 arduino.connect(ArduinoIP);
-arduino.add('neoStrip1', new NeoPixel(arduino));
+arduino.attach('neoStrip1', new NeoPixel(arduino));
 
 // Initialize strip: pin 5, 8 pixels
 arduino.neoStrip1.init(5, 8);
@@ -143,9 +143,9 @@ arduino.neoStrip1.show();
 
 ### Multiple Strips
 ```javascript
-// Add multiple NeoPixel strips
-arduino.add('strip1', new NeoPixel(arduino));
-arduino.add('strip2', new NeoPixel(arduino));
+// Attach multiple NeoPixel strips
+arduino.attach('strip1', new NeoPixel(arduino));
+arduino.attach('strip2', new NeoPixel(arduino));
 
 // Configure each independently  
 arduino.strip1.init(5, 8);   // Pin 5, 8 LEDs
