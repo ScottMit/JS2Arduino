@@ -24,7 +24,8 @@ const DIGITAL_WRITE  = 2;
 const DIGITAL_READ   = 3;
 const ANALOG_WRITE   = 4;
 const ANALOG_READ    = 5;
-const END            = 6;  // Stop a registered action
+// Special JS-only constant
+const END = -1;  // Stop a registered action
 
 const INPUT = 0;
 const OUTPUT = 1;
@@ -322,6 +323,10 @@ class Arduino {
     }
 
     digitalRead(pin, interval = this.defaultReadingInterval) {
+        if (interval === END) {
+            this.end(pin); // wrapper method
+            return 0;
+        }
         const event = this.registerEvent(pin, DIGITAL_READ, interval);
 
         if (event.lastUpdate === 0) {
@@ -333,6 +338,10 @@ class Arduino {
     }
 
     analogRead(pin, interval = this.defaultReadingInterval) {
+        if (interval === END) {
+            this.end(pin); // wrapper method
+            return 0;
+        }
         const event = this.registerEvent(pin, ANALOG_READ, interval);
 
         if (event.lastUpdate === 0) {
@@ -341,6 +350,13 @@ class Arduino {
         }
 
         return event.value ?? 0;
+    }
+
+    end(pin) {
+        this.registeredEvents = this.registeredEvents.filter(e => e.id !== pin);
+        this.send({ id: pin, action: 6, params: [] }); // protocol END = 6
+        console.log(`Stopped periodic actions on pin ${pin}`);
+        return this;
     }
 
     _modeToType(mode) {
@@ -359,16 +375,53 @@ class Arduino {
         if (!msg.data) return;
 
         msg.data.forEach(item => {
-            let event = this.registeredEvents.find(e => e.id === item.id);
-            if (event) {
-                event.value = item.value;
+            // Check if this is an extension message (ID >= 1000)
+            if (item.id >= 1000) {
+                // Route to appropriate extension
+                this.routeExtensionMessage(item);
             } else {
-                this.registeredEvents.push({
-                    id: item.id,
-                    type: item.type,
-                    value: item.value
-                });
+                // Handle regular pin-based messages
+                let event = this.registeredEvents.find(e => e.id === item.id);
+                if (event) {
+                    event.value = item.value;
+                } else {
+                    this.registeredEvents.push({
+                        id: item.id,
+                        type: item.type,
+                        value: item.value
+                    });
+                }
             }
         });
+    }
+
+    routeExtensionMessage(item) {
+        // Determine extension type based on ID ranges
+        let extension = null;
+        let adjustedId = item.id;
+
+        if (item.id >= 2000 && item.id < 3000) {
+            // Ultrasonic sensor messages (ID 2000-2999)
+            adjustedId = item.id - 2000; // Get logical ID
+            extension = Object.values(this.extensions).find(ext =>
+                ext.deviceId === 202 && ext.logicalId === adjustedId
+            );
+        } else if (item.id >= 1000 && item.id < 2000) {
+            // Servo messages (ID 1000-1999)
+            adjustedId = item.id - 1000;
+            extension = Object.values(this.extensions).find(ext =>
+                ext.deviceId === 201 && ext.logicalId === adjustedId
+            );
+        }
+
+        if (extension && typeof extension.handleMessage === 'function') {
+            extension.handleMessage({
+                id: adjustedId,
+                type: item.type,
+                value: item.value
+            });
+        } else {
+            console.warn('No extension found for message:', item);
+        }
     }
 }

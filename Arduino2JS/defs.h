@@ -20,28 +20,12 @@
 #define END            6    // Stop a registered action
 
 // -------------------------------------------------------------------
-// Pin Mode Constants
-// -------------------------------------------------------------------
-#define INPUT 0
-#define OUTPUT 1
-#define INPUT_PULLUP 2
-#define INPUT_PULLDOWN 3
-#define OUTPUT_OPENDRAIN 4
-#define ANALOG_INPUT 8
-#define ANALOG_OUTPUT 10
-
-// -------------------------------------------------------------------
-// Digital Values
-// -------------------------------------------------------------------
-#define LOW 0
-#define HIGH 1
-
-// -------------------------------------------------------------------
 // Extension Device IDs (200+)
 // -------------------------------------------------------------------
 #define RESERVED_START 200
 #define NEO_PIXEL      200
 #define SERVO_CONTROL  201
+#define ULTRASONIC_CONTROL 202
 
 // -------------------------------------------------------------------
 // NeoPixel Extension Actions (10-19)
@@ -62,6 +46,14 @@
 #define SERVO_WRITE_MICROSECONDS 23 // Write microseconds: params = [servoId, microseconds]
 #define SERVO_READ        24     // Read current angle: params = [servoId]
 #define SERVO_ATTACHED    25     // Check if attached: params = [servoId]
+
+// -------------------------------------------------------------------
+// Ultrasonic Extension Actions (30-39)
+// -------------------------------------------------------------------
+#define ULTRASONIC_ATTACH     30     // Attach sensor: params = [sensorId, trigPin, echoPin] (echoPin = -1 for 3-wire)
+#define ULTRASONIC_DETACH     31     // Detach sensor: params = [sensorId]
+#define ULTRASONIC_READ       32     // Read distance: params = [sensorId, unit] (0=CM, 1=INCH)
+#define ULTRASONIC_SET_TIMEOUT 33    // Set timeout: params = [sensorId, timeoutMs]
 
 // -------------------------------------------------------------------
 // Future Extension IDs

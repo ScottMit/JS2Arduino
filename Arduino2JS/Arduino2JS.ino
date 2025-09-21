@@ -10,16 +10,16 @@
 
 // Platform-specific includes
 #ifdef ARDUINO_UNOR4_WIFI
-  #include "WiFiS3.h"
-  #include "ArduinoGraphics.h"
-  #include "Arduino_LED_Matrix.h"
-  #include "TextAnimation.h"
-  #define PLATFORM_UNO_R4
+#include "WiFiS3.h"
+#include "ArduinoGraphics.h"
+#include "Arduino_LED_Matrix.h"
+#include "TextAnimation.h"
+#define PLATFORM_UNO_R4
 #elif defined(ESP32)
-  #include <WiFi.h>
-  #define PLATFORM_ESP32
+#include <WiFi.h>
+#define PLATFORM_ESP32
 #else
-  #error "Unsupported platform - only ESP32 and UNO R4 WiFi are supported"
+#error "Unsupported platform - only ESP32 and UNO R4 WiFi are supported"
 #endif
 
 #include <WebSocketsServer.h>
@@ -34,6 +34,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
 void handleCoreAction(int pin, int action, JsonArray& params);
 void performRead(int pin, int action);
 void registerRead(int pin, int action, unsigned long interval);
+void registerAction(int id, int type, unsigned long interval, int extraParam = 0);
 void handleExtensionAction(int deviceId, int action, JsonArray& params);
 void sendReturnMessage(int id, int type, float value);
 int getIndex(int theId);
@@ -42,10 +43,10 @@ void platformInit();
 void platformLoop();
 
 #ifdef PLATFORM_UNO_R4
-  void displayIP();
-  void matrixCallback();
-  void matrixText(const char* text, int scroll);
-  const char* ipAddressToString(const IPAddress& ip);
+void displayIP();
+void matrixCallback();
+void matrixText(const char* text, int scroll);
+const char* ipAddressToString(const IPAddress& ip);
 #endif
 
 // -------------------------------------------------------------------
@@ -53,6 +54,7 @@ void platformLoop();
 // -------------------------------------------------------------------
 #include "NeoPixelExtension.h"
 #include "ServoExtension.h"
+#include "UltrasonicExtension.h"
 
 // -------------------------------------------------------------------
 // WebSocket
@@ -65,9 +67,9 @@ const char* password = SECRET_PASS;
 // Platform-specific variables
 // -------------------------------------------------------------------
 #ifdef PLATFORM_UNO_R4
-  ArduinoLEDMatrix matrix;
-  TEXT_ANIMATION_DEFINE(anim, 100)
-  bool matrixDisplayReady = true;
+ArduinoLEDMatrix matrix;
+TEXT_ANIMATION_DEFINE(anim, 100)
+bool matrixDisplayReady = true;
 #endif
 
 // -------------------------------------------------------------------
@@ -87,7 +89,7 @@ Actions registeredActions[NUM_ACTIONS];
 // -------------------------------------------------------------------
 void setup() {
   Serial.begin(115200);
-  
+
 #ifdef PLATFORM_UNO_R4
   Serial.println("UNO R4 WiFi WebSocket Server Starting...");
 #elif defined(PLATFORM_ESP32)
@@ -108,7 +110,7 @@ void setup() {
     Serial.println("WiFi module not found!");
     while (true) delay(1000);
   }
-  
+
   while (WiFi.begin(ssid, password) != WL_CONNECTED) {
     Serial.print("Attempting to connect to SSID: ");
     Serial.println(ssid);
@@ -117,7 +119,7 @@ void setup() {
 #elif defined(PLATFORM_ESP32)
   WiFi.begin(ssid, password);
   Serial.print("Connecting to WiFi");
-  
+
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
@@ -140,12 +142,12 @@ void setup() {
 // -------------------------------------------------------------------
 void loop() {
   webSocket.loop();
-  
+
   // Platform-specific loop tasks
   platformLoop();
 
   unsigned long now = millis();
-  
+
   // Handle periodic registered actions
   for (int i = 0; i < NUM_ACTIONS; i++) {
     if (registeredActions[i].id == -1) continue;
@@ -156,10 +158,18 @@ void loop() {
 
     if (type == DIGITAL_READ || type == ANALOG_READ) {
       performRead(pin, type);
+    } else if (pin >= 2000 && pin < 3000) {
+      // Handle extension actions
+      if (type == ULTRASONIC_READ) {
+        // Ultrasonic sensor periodic read
+        int sensorId = pin - 2000;
+        UltrasonicExt::performPeriodicRead(sensorId);
+      }
+      // Add other extension ranges here as needed
     }
 
     registeredActions[i].lastUpdate = now;
-  }  
+  }
 }
 
 // -------------------------------------------------------------------
@@ -192,26 +202,27 @@ void platformLoop() {
 // WebSocket Event
 // -------------------------------------------------------------------
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length) {
-  switch(type) {
+  switch (type) {
     case WStype_DISCONNECTED:
+      // Removed because this overloads the monitor on the UNO R4
       // Serial.print("[");
       // Serial.print(num);
       // Serial.println("] Disconnected!");
       break;
-      
+
     case WStype_CONNECTED:
       Serial.print("[");
       Serial.print(num);
       Serial.println("] Client connected");
       break;
-      
+
     case WStype_TEXT:
       {
         Serial.print("[");
         Serial.print(num);
         Serial.print("] Received: ");
         Serial.println((char*)payload);
-        
+
         StaticJsonDocument<512> doc;
         DeserializationError error = deserializeJson(doc, payload, length);
         if (error) {
@@ -233,7 +244,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
         }
         break;
       }
-      
+
     default:
       break;
   }
@@ -248,29 +259,29 @@ void handleCoreAction(int pin, int action, JsonArray& params) {
       pinMode(pin, (int)params[0]);
       unregisterAction(pin);
       break;
-      
+
     case DIGITAL_WRITE:
       digitalWrite(pin, (int)params[0]);
       break;
-      
+
     case DIGITAL_READ:
       performRead(pin, DIGITAL_READ);
       if (params.size() > 0 && params[0] > 0) {
         registerRead(pin, DIGITAL_READ, (unsigned long)params[0]);
       }
       break;
-      
+
     case ANALOG_WRITE:
       analogWrite(pin, (int)params[0]);
       break;
-      
+
     case ANALOG_READ:
       performRead(pin, ANALOG_READ);
       if (params.size() > 0 && params[0] > 0) {
         registerRead(pin, ANALOG_READ, (unsigned long)params[0]);
       }
       break;
-      
+
     case END:
       unregisterAction(pin);
       break;
@@ -285,12 +296,16 @@ void handleExtensionAction(int deviceId, int action, JsonArray& params) {
     case NEO_PIXEL:
       NeoPixelExt::handle(action, params);
       break;
-    
+
     case SERVO_CONTROL:
       ServoExt::handle(action, params);
       break;
-    
-    // Future extensions go here
+
+    case ULTRASONIC_CONTROL:
+      UltrasonicExt::handle(action, params);
+      break;
+
+      // Future extensions go here
   }
 }
 
@@ -299,27 +314,27 @@ void handleExtensionAction(int deviceId, int action, JsonArray& params) {
 // -------------------------------------------------------------------
 void performRead(int pin, int action) {
   int val = 0;
-  
+
   switch (action) {
     case DIGITAL_READ:
       val = digitalRead(pin);
       break;
-      
+
     case ANALOG_READ:
       val = analogRead(pin);
       break;
-      
+
     default:
       return;
   }
-  
+
   sendReturnMessage(pin, action, val);
 }
 
 void registerRead(int pin, int action, unsigned long interval) {
   int idx = getIndex(pin);
   if (idx >= 0) {
-    registeredActions[idx] = {pin, action, millis(), interval};
+    registeredActions[idx] = { pin, action, millis(), interval };
   }
 }
 
@@ -345,10 +360,17 @@ int getIndex(int theId) {
   return emptySlot;
 }
 
+void registerAction(int id, int type, unsigned long interval, int extraParam) {
+  int idx = getIndex(id);
+  if (idx >= 0) {
+    registeredActions[idx] = { id, type, millis(), interval };
+  }
+}
+
 void unregisterAction(int pin) {
   int idx = getIndex(pin);
   if (idx < 0) return;
-  registeredActions[idx] = {-1, 0, 0, 0};
+  registeredActions[idx] = { -1, 0, 0, 0 };
 }
 
 // -------------------------------------------------------------------
