@@ -153,17 +153,6 @@ class Servo {
     }
 
     read() {
-        if (!this.isAttached) {
-            console.warn(`Servo ${this.logicalId} not attached`);
-            return 0;
-        }
-
-        this.arduino.send({
-            id: this.deviceId,
-            action: SERVO_READ,
-            params: [this.logicalId]
-        });
-
         return this.currentAngle;
     }
 

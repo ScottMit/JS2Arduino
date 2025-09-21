@@ -5,7 +5,7 @@
 // GPL-3.0 License
 // ==============================================================
 
-let ArduinoIP = '10.0.0.42';
+let ArduinoIP = '10.0.0.43';
 
 let arduino;
 let distance = 0;
@@ -23,7 +23,7 @@ function setup() {
     arduino.add('ultrasonicSensor', new Ultrasonic(arduino));
 
     // Attach sensor: trig pin 7, echo pin 8
-    arduino.ultrasonicSensor.attach(6, 7);
+    arduino.ultrasonicSensor.attach(26, 27);
 
     // Set timeout to 30ms for longer distances, default is 20ms
     arduino.ultrasonicSensor.setTimeout(40);

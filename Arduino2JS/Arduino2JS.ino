@@ -256,12 +256,39 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
 void handleCoreAction(int pin, int action, JsonArray& params) {
   switch (action) {
     case PIN_MODE:
-      pinMode(pin, (int)params[0]);
-      unregisterAction(pin);
-      break;
+      {
+        int modeParam = (int)params[0];
+        uint8_t mode;
+
+        // Map numeric params to Arduino constants
+        switch (modeParam) {
+          case 0: mode = INPUT; break;
+          case 1: mode = OUTPUT; break;
+          case 2: mode = INPUT_PULLUP; break;
+#if defined(ESP32)
+          case 3: mode = INPUT_PULLDOWN; break;  // Only on ESP32
+#endif
+          default:
+            Serial.print("Invalid pinMode param: ");
+            Serial.println(modeParam);
+            return;
+        }
+
+        pinMode(pin, mode);
+        unregisterAction(pin);
+        Serial.print("pinMode set for pin ");
+        Serial.print(pin);
+        Serial.print(" to mode ");
+        Serial.println(modeParam);
+        break;
+      }
 
     case DIGITAL_WRITE:
       digitalWrite(pin, (int)params[0]);
+      Serial.print("pin: ");
+      Serial.print(pin);
+      Serial.print(" set to: ");
+      Serial.println((int)params[0]);
       break;
 
     case DIGITAL_READ:

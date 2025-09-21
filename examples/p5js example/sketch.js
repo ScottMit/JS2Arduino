@@ -5,15 +5,15 @@
 // GPL-3.0 License
 // ==============================================================
 
-let ArduinoIP = '10.0.0.42';
+let ArduinoIP = '10.0.0.43';
 
 let arduino;
 let circleX, circleY;
 let dx, dy;
 
 // pin globals
-const LED = 13;
-const POTPIN = A0; // Change this to match the pin you are using
+const LED = 4;
+const POTPIN = 32; // Change this to match the pin you are using
 
 function setup() {
     createCanvas(600, 600);
@@ -38,7 +38,7 @@ function draw() {
 
     // get reading from the Arduino
     let dial = arduino.analogRead(POTPIN);
-    let circleRadius = map(dial, 0, 1023, 2, 100);
+    let circleRadius = map(dial, 0, 4095, 2, 100); // for UNO the range is 0-1023
 
     // Check if mouse is inside the circle
     let d = dist(mouseX, mouseY, circleX, circleY);

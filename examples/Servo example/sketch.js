@@ -5,7 +5,7 @@
 // GPL-3.0 License
 // ==============================================================
 
-let ArduinoIP = '10.0.0.42'; // Change this to your Arduino's IP
+let ArduinoIP = '10.0.0.43'; // Change this to your Arduino's IP
 
 let arduino;
 let angle = 90; // Starting angle
@@ -22,13 +22,13 @@ function setup() {
     // Attach servo to the Arduino
     arduino.add('myServo', new Servo(arduino));
 
-    // Attach servo to pin 9 (common servo pin)
+    // Attach servo to pin 5 (common servo pin)
     arduino.myServo.attach(5);
 
     // Move to center position
     arduino.myServo.center();
 
-    console.log("Servo attached to pin 9");
+    console.log("Servo attached to pin 5");
 }
 
 function draw() {
@@ -53,11 +53,10 @@ function draw() {
             let mouseLoc = constrain(mouseX, 0, width);
             let targetAngle = map(mouseLoc, 0, width, 0, 180);
             arduino.myServo.write(targetAngle);
-            angle = targetAngle;
             break;
         }
         case 2: {
-            // autoSweep runs in background, nothing to do per frame
+            // autoSweep runs in background, get the current angle
             break;
         }
         case 3: {
@@ -73,6 +72,7 @@ function draw() {
             break;
         }
     }
+    angle = arduino.myServo.currentAngle;
 }
 
 function drawServoVisualization() {
