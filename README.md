@@ -4,7 +4,7 @@ Connect your Arduino to web interfaces and create interactive projects that brid
 
 ## What is this?
 
-This project lets you control Arduino hardware (like LEDs, sensors, servo motors, and NeoPixel strips) directly from a web page in real-time. No complex networking code needed - just connect your Arduino to your WiFi network and start building interactive experiences.
+This project lets you control Arduino hardware (like LEDs, sensors, servo motors, ultrasonic sensors, and NeoPixel strips) directly from a web page in real-time. No complex networking code needed - just connect your Arduino to your WiFi network and start building interactive experiences.
 
 **Perfect for:**
 - Interactive art installations
@@ -23,6 +23,7 @@ This project lets you control Arduino hardware (like LEDs, sensors, servo motors
 - **IoT prototypes** that respond to web inputs
 - **Servo-controlled mechanisms** with web interfaces
 - **Multi-strip LED displays** with independent control
+- **Distance sensing systems** for proximity detection and measurement
 
 ## What You Need
 
@@ -32,6 +33,7 @@ This project lets you control Arduino hardware (like LEDs, sensors, servo motors
 - **Optional components:**
   - NeoPixel LED strips (WS2812B/SK6812)
   - Servo motors (standard 180° servos)
+  - Ultrasonic sensors (HC-SR04, 3-wire or 4-wire)
   - Sensors (temperature, light, motion)
   - Regular LEDs and resistors
   - Potentiometers/knobs
@@ -227,6 +229,53 @@ await arduino.myServo.sweep(0, 180, 2000);
 await arduino.myServo.sweep(0, 180, 3000, 100);
 ```
 
+### Ultrasonic Distance Sensors
+
+#### Single Sensor
+```javascript
+// Attach an ultrasonic sensor
+arduino.attach('mySensor', new Ultrasonic(arduino));
+
+// Attach sensor (4-wire mode: separate trigger and echo pins)
+arduino.mySensor.attach(6, 7); // Trig pin 6, Echo pin 7
+
+// For 3-wire sensors (single pin for trigger/echo):
+arduino.mySensor.attach(6); // Single pin mode
+
+// Read distance
+let distance = arduino.mySensor.read(); // Returns distance in cm
+let distanceInches = arduino.mySensor.read(INCH); // Returns distance in inches
+
+// Convenience methods
+let distanceCM = arduino.mySensor.readCM();
+let distanceInches = arduino.mySensor.readInches();
+
+// Set timeout for longer range detection
+arduino.mySensor.setTimeout(40); // 40ms timeout (default: 20ms)
+
+// Check if object is within range
+if (arduino.mySensor.isInRange(50)) { // Within 50cm
+    console.log("Object detected nearby");
+}
+```
+
+#### Multiple Sensors
+```javascript
+// Control multiple ultrasonic sensors independently
+arduino.attach('frontSensor', new Ultrasonic(arduino));
+arduino.attach('backSensor', new Ultrasonic(arduino));
+arduino.attach('sideSensor', new Ultrasonic(arduino));
+
+arduino.frontSensor.attach(6, 7);  // Trig pin 6, Echo pin 7
+arduino.backSensor.attach(8, 9);   // Trig pin 8, Echo pin 9
+arduino.sideSensor.attach(10);     // 3-wire sensor on pin 10
+
+// Read from each sensor
+let frontDistance = arduino.frontSensor.readCM();
+let backDistance = arduino.backSensor.readCM(); 
+let sideDistance = arduino.sideSensor.readCM();
+```
+
 ### Multiple Device Support
 
 You can control multiple instances of the same device type. Each extension automatically gets a unique logical ID:
@@ -241,6 +290,10 @@ arduino.attach('wall', new NeoPixel(arduino));        // Gets logical ID 2
 arduino.attach('servo1', new Servo(arduino));         // Gets logical ID 0
 arduino.attach('servo2', new Servo(arduino));         // Gets logical ID 1
 
+// Multiple ultrasonic sensors
+arduino.attach('frontSensor', new Ultrasonic(arduino)); // Gets logical ID 0
+arduino.attach('backSensor', new Ultrasonic(arduino));  // Gets logical ID 1
+
 // Each device can have different configurations
 arduino.ceiling.init(6, 20);    // 20 LEDs on pin 6
 arduino.floor.init(7, 50);      // 50 LEDs on pin 7
@@ -249,6 +302,9 @@ arduino.wall.init(8, 10);       // 10 LEDs on pin 8
 arduino.servo1.attach(9);       // Servo on pin 9
 arduino.servo2.attach(10);      // Servo on pin 10
 
+arduino.frontSensor.attach(6, 7); // Ultrasonic trig pin 6, echo pin 7
+arduino.backSensor.attach(8, 9);  // Ultrasonic trig pin 8, echo pin 9
+
 // Debug: see what's attached
 console.log(arduino.listExtensions());
 // Output: [
@@ -256,7 +312,9 @@ console.log(arduino.listExtensions());
 //   { id: 'floor', logicalId: 1, deviceId: 200, type: 'NeoPixel' },
 //   { id: 'wall', logicalId: 2, deviceId: 200, type: 'NeoPixel' },
 //   { id: 'servo1', logicalId: 0, deviceId: 201, type: 'Servo' },
-//   { id: 'servo2', logicalId: 1, deviceId: 201, type: 'Servo' }
+//   { id: 'servo2', logicalId: 1, deviceId: 201, type: 'Servo' },
+//   { id: 'frontSensor', logicalId: 0, deviceId: 202, type: 'Ultrasonic' },
+//   { id: 'backSensor', logicalId: 1, deviceId: 202, type: 'Ultrasonic' }
 // ]
 ```
 
@@ -301,6 +359,9 @@ arduino.strip.setThreshold(10); // Only send if color change > 10
 
 // Servo movements below 1° threshold are ignored  
 arduino.myServo.setThreshold(2); // Only move if change > 2°
+
+// Ultrasonic reading throttling
+arduino.mySensor.setReadThrottle(100); // Max one reading every 100ms
 ```
 
 ## Pin Reference
@@ -310,6 +371,7 @@ arduino.myServo.setThreshold(2); // Only move if change > 2°
 Digital pins: 0-13 (pin 13 has built-in LED)
 Analog pins:  A0-A5 (also numbered 14-19)
 PWM pins:     3, 5, 6, 9, 10, 11 (for analogWrite/servos)
+Good for ultrasonic: 2-12 (avoid pin 1 and serial pins 0,1)
 ```
 
 ### ESP32
@@ -317,7 +379,8 @@ PWM pins:     3, 5, 6, 9, 10, 11 (for analogWrite/servos)
 Most pins: 0-39 (avoid pins 6-11, used internally)
 Good for LEDs: 2, 4, 5, 12, 13
 Good for servos: 16, 17, 18, 19
-Input only: 34-39 (can't be outputs)
+Good for ultrasonic: 2, 4, 5, 12-19, 21-23, 25-27, 32-39
+Input only: 34-39 (can't be outputs - use only for ultrasonic echo pins)
 ```
 
 ## Extension System
@@ -337,6 +400,13 @@ Input only: 34-39 (can't be outputs)
    - Smooth sweep animations
    - Throttling to prevent jitter
 
+3. **Ultrasonic** (Device ID: 202)
+   - Support for up to 8 sensors
+   - 3-wire and 4-wire sensor support
+   - Configurable timeout settings
+   - Distance measurement in cm or inches
+   - Range detection and proximity alerts
+
 ### Creating Custom Extensions
 
 Extensions follow a standard pattern. Here's the structure:
@@ -345,7 +415,7 @@ Extensions follow a standard pattern. Here's the structure:
 class MyExtension {
     constructor(arduino) {
         this.arduino = arduino;
-        this.deviceId = YOUR_DEVICE_ID; // 202+
+        this.deviceId = YOUR_DEVICE_ID; // 203+
         this.logicalId = null; // Automatically assigned
     }
     
@@ -373,6 +443,7 @@ class MyExtension {
 ### Extension Actions
 - **NeoPixel** (10-15): Init, set pixel, fill, clear, brightness, show
 - **Servo** (20-25): Attach, detach, write angle, write microseconds, read, attached
+- **Ultrasonic** (30-33): Attach, detach, read distance, set timeout
 
 ### Message Format
 ```javascript
@@ -413,6 +484,18 @@ class MyExtension {
 - Use appropriate pins (PWM-capable pins)
 - Adjust servo movement thresholds if too sensitive
 - Ensure servo.show() timing isn't too frequent
+
+### "Ultrasonic sensor doesn't work"
+- Check wiring: VCC to 5V, GND to GND, Trig and Echo to correct pins
+- Try increasing timeout: `arduino.mySensor.setTimeout(50)`
+- Ensure sensor is pointed at flat, perpendicular surfaces
+- Check Serial Monitor/browser console for connection errors
+
+### "Ultrasonic readings are erratic"
+- Mount sensor stable and level
+- Point at flat surfaces (avoid soft materials like fabric)
+- Increase timeout for longer distances
+- Use averaging in JavaScript code to smooth readings
 
 ### "Multiple devices interfere"
 - Each device instance gets a unique logical ID automatically
@@ -457,6 +540,7 @@ Arduino2JS/                # Arduino code
 ├── defs.h                 # Protocol definitions and action codes
 ├── NeoPixelExtension.h    # NeoPixel support (up to 8 strips)
 ├── ServoExtension.h       # Servo support (up to 12 servos)
+├── UltrasonicExtension.h  # Ultrasonic support (up to 8 sensors)
 └── secrets.h              # Your WiFi credentials (create this file)
 
 JS2Arduino/                # Web interface code  
@@ -465,6 +549,7 @@ JS2Arduino/                # Web interface code
 ├── arduinoComs.js         # Arduino communication system
 ├── neoPixel.js            # NeoPixel JavaScript extension
 ├── servo.js               # Servo JavaScript extension
+├── ultrasonic.js          # Ultrasonic JavaScript extension
 └── package.json           # Project metadata
 ```
 
@@ -475,6 +560,7 @@ JS2Arduino/                # Web interface code
 3. **Optimize reading intervals:** Don't read sensors faster than needed
 4. **Minimize servo writes:** Large angle changes work better than many small ones
 5. **Monitor connection:** Use `getStatus()` to check connection health
+6. **Ultrasonic optimization:** Use `setReadThrottle()` to limit sensor update frequency
 
 ## Learning Resources
 
