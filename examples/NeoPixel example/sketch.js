@@ -20,7 +20,7 @@ function setup() {
     // attach NeoPixel array to the Arduino
     arduino.add('neoStrip1', new NeoPixel(arduino));
     // Init strip: pin 6, 8 pixels
-    arduino.neoStrip1.init(18, 8);
+    arduino.neoStrip1.init(6, 8);
     // set strip brightness
     arduino.neoStrip1.setBrightness(50);
     // Clear everything
