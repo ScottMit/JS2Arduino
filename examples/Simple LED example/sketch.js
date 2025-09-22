@@ -17,14 +17,14 @@ window.addEventListener('load', function() {
     arduino.connect(ArduinoIP);
 
     // Set up pins
-    arduino.pinMode(4, OUTPUT);  // Built-in LED
+    arduino.pinMode(13, OUTPUT);  // Built-in LED
 
     // Set up button event listeners
     document.getElementById('led-on').addEventListener('click', function() {
-        arduino.digitalWrite(4, HIGH);
+        arduino.digitalWrite(13, HIGH);
     });
 
     document.getElementById('led-off').addEventListener('click', function() {
-        arduino.digitalWrite(4, LOW);
+        arduino.digitalWrite(13, LOW);
     });
 });
