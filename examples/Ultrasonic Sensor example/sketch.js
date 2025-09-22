@@ -23,7 +23,7 @@ function setup() {
     arduino.add('ultrasonicSensor', new Ultrasonic(arduino));
 
     // Attach sensor: trig pin 7, echo pin 8
-    arduino.ultrasonicSensor.attach(26, 27);
+    arduino.ultrasonicSensor.attach(7, 8);
 
     // Set timeout to 30ms for longer distances, default is 20ms
     arduino.ultrasonicSensor.setTimeout(40);
